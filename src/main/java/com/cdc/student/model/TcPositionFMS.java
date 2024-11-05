@@ -75,7 +75,7 @@ public class TcPositionFMS {
         this.attributes = tcPosition.getAttributes();
         this.accuracy = tcPosition.getAccuracy();
         this.network = tcPosition.getNetwork();
-        this.geofenceids = tcPosition.getNetwork();
+        this.geofenceids = tcPosition.getGeofenceids();
 
     }
 
