@@ -28,7 +28,7 @@ public class TcPositionConnectorConfig {
         return io.debezium.config.Configuration.create()
                 .with("connector.class", "io.debezium.connector.mysql.MySqlConnector")
                 .with("offset.storage",  "org.apache.kafka.connect.storage.FileOffsetBackingStore")
-                .with("offset.storage.file.filename", "student-offset.dat")
+                .with("offset.storage.file.filename", "tc_position-offset.dat")
                 .with("offset.flush.interval.ms", 600)
                 .with("database.serverTimezone", "UTC")
                 .with("heartbeat.interval.ms", 1000)
@@ -48,6 +48,7 @@ public class TcPositionConnectorConfig {
                         "io.debezium.relational.history.FileDatabaseHistory")
                 .with("database.history.file.filename",
                         "dbhistory.dat")
+                .with("message.key.columns", "test.tc_positions:id,servertime")
                 .build();
     }
 
