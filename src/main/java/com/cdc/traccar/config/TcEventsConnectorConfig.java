@@ -5,29 +5,28 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-
 @Configuration
-public class TcPositionConnectorConfig {
+public class TcEventsConnectorConfig {
 
-    @Value("${tcPosition.datasource.host}")
-    private String tcPositionDBHost;
+    @Value("${tcEvents.datasource.host}")
+    private String tcEventsDBHost;
 
-    @Value("${tcPosition.datasource.databasename}")
-    private String tcPositionDBName;
+    @Value("${tcEvents.datasource.databasename}")
+    private String tcEventsDBName;
 
-    @Value("${tcPosition.datasource.port}")
-    private String tcPositionDBPort;
+    @Value("${tcEvents.datasource.port}")
+    private String tcEventsDBPort;
 
-    @Value("${tcPosition.datasource.username}")
-    private String tcPositionDBUserName;
+    @Value("${tcEvents.datasource.username}")
+    private String tcEventsDBUserName;
 
-    @Value("${tcPosition.datasource.password}")
-    private String tcPositionDBPassword;
+    @Value("${tcEvents.datasource.password}")
+    private String tcEventsDBPassword;
 
-    private String TC_POSITION_TABLE_NAME = "tc_position";
+    private String TC_POSITION_TABLE_NAME = "tc_events";
 
     @Bean
-    public io.debezium.config.Configuration tcPositionConnector() {
+    public io.debezium.config.Configuration tcEventsConnector() {
         return io.debezium.config.Configuration.create()
                 .with("connector.class", "io.debezium.connector.mysql.MySqlConnector")
                 .with("offset.storage",  "org.apache.kafka.connect.storage.FileOffsetBackingStore")
@@ -37,14 +36,14 @@ public class TcPositionConnectorConfig {
                 .with("heartbeat.interval.ms", 1000)
                 .with("autoReconnect", true)
 //				.with("plugin.name", "pgoutput")
-                .with("name", "tcPosition-mysql-connector")
-                .with("database.server.name", tcPositionDBHost+"-"+tcPositionDBName)
+                .with("name", "tcEvents-mysql-connector")
+                .with("database.server.name", tcEventsDBHost+"-"+tcEventsDBName)
                 .with("database.server.id", 184054)
-                .with("database.hostname", tcPositionDBHost)
-                .with("database.port", tcPositionDBPort)
-                .with("database.user", tcPositionDBUserName)
-                .with("database.password", tcPositionDBPassword)
-                .with("database.whitelist", tcPositionDBName)
+                .with("database.hostname", tcEventsDBHost)
+                .with("database.port", tcEventsDBPort)
+                .with("database.user", tcEventsDBUserName)
+                .with("database.password", tcEventsDBPassword)
+                .with("database.whitelist", tcEventsDBName)
                 .with("database.history",
                         "io.debezium.relational.history.FileDatabaseHistory")
                 .with("database.history.file.filename",

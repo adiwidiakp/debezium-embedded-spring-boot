@@ -1,5 +1,6 @@
 package com.cdc.traccar.listener;
 
+import com.cdc.traccar.service.TcEventsService;
 import io.debezium.config.Configuration;
 import io.debezium.data.Envelope;
 import io.debezium.embedded.EmbeddedEngine;
@@ -11,7 +12,6 @@ import org.apache.kafka.connect.source.SourceRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.cdc.traccar.service.TcPositionService;
 import com.cdc.traccar.sql.AbstractDebeziumSqlProvider;
 import com.cdc.traccar.sql.DebeziumSqlProviderFactory;
 import com.cdc.traccar.utils.DebeziumRecordUtils;
@@ -25,21 +25,21 @@ import java.util.concurrent.Executors;
 
 @Slf4j
 @Component
-public class TcPositionListener {
+public class TcEventsListener {
 
     private final Executor executor = Executors.newSingleThreadExecutor();
 
     private final EmbeddedEngine engine;
 
-    private final TcPositionService tcPositionService;
+    private final TcEventsService tcEventsService;
 
-    private TcPositionListener(Configuration tcPositionConnector, TcPositionService tcPositionService) {
+    private TcEventsListener(Configuration tcEventsConnector, TcEventsService tcEventsService) {
         this.engine = EmbeddedEngine
                 .create()
-                .using(tcPositionConnector)
+                .using(tcEventsConnector)
                 .notifying(this::handleRecord).build();
 
-        this.tcPositionService = tcPositionService;
+        this.tcEventsService = tcEventsService;
     }
 
     @PostConstruct
@@ -120,7 +120,7 @@ public class TcPositionListener {
         try {
             log.info("dml语句 : {}", sql);
             log.info("parm:{}" ,  provider.getSqlParameterMap());
-            tcPositionService.maintainReadModel(provider.getSqlParameterMap(), operation);
+            tcEventsService.maintainReadModel(provider.getSqlParameterMap(), operation);
 
         } catch (Exception e) {
             log.error("数据库DML操作失败，", e);
