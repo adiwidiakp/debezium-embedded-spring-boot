@@ -9,19 +9,19 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class TcPositionConnectorConfig {
 
-    @Value("${tcPosition.datasource.host}")
+    @Value("${tcPositionSource.datasource.host}")
     private String tcPositionDBHost;
 
-    @Value("${tcPosition.datasource.databasename}")
+    @Value("${tcPositionSource.datasource.databasename}")
     private String tcPositionDBName;
 
-    @Value("${tcPosition.datasource.port}")
+    @Value("${tcPositionSource.datasource.port}")
     private String tcPositionDBPort;
 
-    @Value("${tcPosition.datasource.username}")
+    @Value("${tcPositionSource.datasource.username}")
     private String tcPositionDBUserName;
 
-    @Value("${tcPosition.datasource.password}")
+    @Value("${tcPositionSource.datasource.password}")
     private String tcPositionDBPassword;
 
     private String TC_POSITION_TABLE_NAME = "tc_position";
