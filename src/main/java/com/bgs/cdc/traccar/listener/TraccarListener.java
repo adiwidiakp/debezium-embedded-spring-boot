@@ -97,7 +97,7 @@ public class TraccarListener {
         try {
 
         } catch (Exception e) {
-            log.error("Database operation DDL statement failed", e);
+            log.trace("Database operation DDL statement failed", e);
         }
     }
 
@@ -120,7 +120,7 @@ public class TraccarListener {
             traccarService.maintainReadModel(provider.getSqlParameterMap(), table, operation);
 
         } catch (Exception e) {
-            log.error("Database DML operation failed.", e);
+            log.trace("Database DML operation failed.", e);
         }
     }
 

@@ -25,6 +25,7 @@ public class TcDeviceFMS {
     private String category;
     private boolean disabled;
     private String status;
+    private String geofenceids;
     @Temporal(TemporalType.TIMESTAMP)
     private Date expirationtime;
     private boolean motionstate;
@@ -38,7 +39,7 @@ public class TcDeviceFMS {
     private boolean motionstreak;
     private Integer calendarid;
 
-    public TcDeviceFMS(Integer id_, String name_, String uniqueid_, java.sql.Timestamp lastupdate_, Integer positionid_, Integer groupid_, String attributes_, String phone_, String model_, String contact_, String category_, boolean disabled_, String status_, java.sql.Timestamp expirationtime_, boolean motionstate_, java.sql.Timestamp motiontime_, double motiondistance_, boolean overspeedstate_, java.sql.Timestamp overspeedtime_, Integer overspeedgeofenceid_, boolean motionstreak_, Integer calendarid_) {
+    public TcDeviceFMS(Integer id_, String name_, String uniqueid_, java.sql.Timestamp lastupdate_, Integer positionid_, Integer groupid_, String attributes_, String phone_, String model_, String contact_, String category_, boolean disabled_, String status_, String geofenceids_, java.sql.Timestamp expirationtime_, boolean motionstate_, java.sql.Timestamp motiontime_, double motiondistance_, boolean overspeedstate_, java.sql.Timestamp overspeedtime_, Integer overspeedgeofenceid_, boolean motionstreak_, Integer calendarid_) {
         this.id = id_;
         this.name = name_;
         this.uniqueid = uniqueid_;
@@ -52,6 +53,7 @@ public class TcDeviceFMS {
         this.category = category_;
         this.disabled = disabled_;
         this.status = status_;
+        this.geofenceids = geofenceids_;
         this.expirationtime = expirationtime_;
         this.motionstate = motionstate_;
         this.motiontime = motiontime_;

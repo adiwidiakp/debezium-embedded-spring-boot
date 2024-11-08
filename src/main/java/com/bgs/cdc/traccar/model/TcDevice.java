@@ -26,6 +26,7 @@ public class TcDevice {
     private String category;
     private boolean disabled;
     private String status;
+    private String geofenceids;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date expirationtime;
     private boolean motionstate;
@@ -38,7 +39,6 @@ public class TcDevice {
     private Integer overspeedgeofenceid;
     private boolean motionstreak;
     private Integer calendarid;
-    private Integer old_id;
 
     public Integer getId() {
         return id;
@@ -144,6 +144,14 @@ public class TcDevice {
         this.status = status;
     }
 
+    public String getGeofenceids() {
+        return geofenceids;
+    }
+
+    public void setGeofenceids(String geofenceids) {
+        this.geofenceids = geofenceids;
+    }
+
     public Date getExpirationtime() {
         return expirationtime;
     }
@@ -216,11 +224,4 @@ public class TcDevice {
         this.calendarid = calendarid;
     }
 
-    public Integer getOld_id() {
-        return old_id;
-    }
-
-    public void setOld_id(Integer old_id) {
-        this.old_id = old_id;
-    }
 }

@@ -9,7 +9,7 @@ import java.util.Date;
 @Data
 @Table(name = "tc_events")
 public class TcEventFMS {
-    
+
     @Id
     private Integer id;
     private String type;

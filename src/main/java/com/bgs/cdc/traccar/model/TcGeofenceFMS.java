@@ -16,18 +16,21 @@ public class TcGeofenceFMS {
     private String area;
     private String attributes;
     private Integer calendarid;
+    private String geotype;
+    private String groupName;
 
-    public TcGeofenceFMS(Integer id_, String name_, String description_, String area_, String attributes_, Integer calendarid_) {
+    public TcGeofenceFMS(Integer id_, String name_, String description_, String area_, String attributes_, Integer calendarid_, String geotype_, String groupName_) {
         this.id = id_;
         this.name = name_;
         this.description = description_;
         this.area = area_;
         this.attributes = attributes_;
         this.calendarid = calendarid_;
+        this.geotype = geotype_;
+        this.groupName = groupName_;
     }
 
     public TcGeofenceFMS() {
-
     }
 
     public void transformTcPosMasterToSlave(TcGeofence tcGeofence) {
@@ -38,6 +41,8 @@ public class TcGeofenceFMS {
         this.area = tcGeofence.getArea();
         this.attributes = tcGeofence.getAttributes();
         this.calendarid = tcGeofence.getCalendarid();
+        this.geotype = tcGeofence.getGeotype();
+        this.groupName =  tcGeofence.getGroupName();
 
     }
 
