@@ -107,7 +107,8 @@ public class TraccarListener {
                             }
                         }
                         log.info("payload {}", DebeziumUtils.toJson(payload));
-                        this.traccarService.replicateData(table, payload, operation);
+                        // TODO: proses replicate ke db_target diganti dengan nulis ke queue
+//                        this.traccarService.replicateData(table, payload, operation);
                         return;
                     }
                 }
