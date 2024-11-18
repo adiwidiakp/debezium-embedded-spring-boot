@@ -71,8 +71,8 @@ public class TraccarService {
         }  
     }
 
-    public String getNameTcDeviceById(Integer id) {
-        TcDevice tcDevice = devicesRepository.findById(id);
+    public String getNameTcDeviceById(Long id) {
+        TcDevice tcDevice = devicesRepository.findOneById(id);
 
         return tcDevice.getName().trim();
     }

@@ -45,8 +45,8 @@ public class TraccarListener {
     private final TraccarService traccarService;
     private final DebeziumEngine<RecordChangeEvent<SourceRecord>> debeziumEngine;
 
-    HashMap<String,Object> deviceName = new HashMap<String,Object>();
-    HashMap<String,Object> deviceSpeed = new HashMap<String,Object>();
+    HashMap<Object,Object> deviceName = new HashMap<Object,Object>();
+    HashMap<Object,Object> deviceSpeed = new HashMap<Object,Object>();
 
     @PostConstruct
     private void start() {
@@ -89,16 +89,20 @@ public class TraccarListener {
                             .collect(toMap(Pair::getKey, Pair::getValue));
 //                        log.trace("{} - {} => {}", table, operation.name(), payload);
                         if(table != null && table.equals("tc_positions") && payload.get("speed")!=null && payload.get("deviceid")!=null) {
-                            String key = (String) payload.get("deviceid");
+                            Integer key = (Integer) payload.get("deviceid");
                             float speed = (float) payload.get("speed");
                             if( deviceName.get( key ) == null ){
-                                String nameOfDevice = this.traccarService.getNameTcDeviceById((Integer) payload.get("deviceid"));
+                                String nameOfDevice = this.traccarService.getNameTcDeviceById(Long.valueOf(key));
                                 deviceName.put(key,nameOfDevice);
+                                log.info("added new key value deviceName {} - {}",key, nameOfDevice);
                             } else {
+                                log.info("key value deviceName existed {} - {}",key, deviceName.get(key));
                                 if( deviceSpeed.get(key) != null ) {
                                     deviceSpeed.replace(key, speed);
+                                    log.info("replaced key value deviceSpeed {} - {}",key, speed);
                                 } else {
                                     deviceSpeed.put(key,speed);
+                                    log.info("added new key value deviceSpeed {} - {}",key, speed);
                                 }
                             }
                         }
