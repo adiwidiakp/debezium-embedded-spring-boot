@@ -70,4 +70,10 @@ public class TraccarService {
             }
         }  
     }
+
+    public String getNameTcDeviceById(Integer id) {
+        TcDevice tcDevice = devicesRepository.findById(id);
+
+        return tcDevice.getName().trim();
+    }
 }

@@ -1,8 +1,10 @@
 package com.bgs.cdc.traccar.listener;
 
+import com.bgs.cdc.traccar.domain.TcDevice;
 import com.bgs.cdc.traccar.service.TraccarService;
 import com.bgs.cdc.traccar.utils.DebeziumRecordUtils;
 
+import com.bgs.cdc.traccar.utils.DebeziumUtils;
 import io.debezium.config.Configuration;
 import io.debezium.data.Envelope;
 import io.debezium.embedded.Connect;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executor;
@@ -41,6 +44,9 @@ public class TraccarListener {
     private final Executor executor = Executors.newSingleThreadExecutor();    
     private final TraccarService traccarService;
     private final DebeziumEngine<RecordChangeEvent<SourceRecord>> debeziumEngine;
+
+    HashMap<String,Object> deviceName = new HashMap<String,Object>();
+    HashMap<String,Object> deviceSpeed = new HashMap<String,Object>();
 
     @PostConstruct
     private void start() {
@@ -73,7 +79,7 @@ public class TraccarListener {
 
                 if (Envelope.Operation.CREATE == operation || Envelope.Operation.UPDATE == operation || Envelope.Operation.DELETE == operation) {
                     if (Objects.nonNull(operation)) {
-                        String record = operation == Operation.DELETE ? BEFORE : AFTER; 
+                        String record = operation == Operation.DELETE ? BEFORE : AFTER;
 
                         Struct struct = (Struct) sourceRecordChangeValue.get(record);
                         Map<String, Object> payload = struct.schema().fields().stream()
@@ -81,7 +87,22 @@ public class TraccarListener {
                             .filter(fieldName -> struct.get(fieldName) != null)
                             .map(fieldName -> Pair.of(fieldName, struct.get(fieldName)))
                             .collect(toMap(Pair::getKey, Pair::getValue));
-                        //log.trace("{} - {} => {}", table, operation.name(), payload);        
+//                        log.trace("{} - {} => {}", table, operation.name(), payload);
+                        if(table != null && table.equals("tc_positions") && payload.get("speed")!=null && payload.get("deviceid")!=null) {
+                            String key = (String) payload.get("deviceid");
+                            float speed = (float) payload.get("speed");
+                            if( deviceName.get( key ) == null ){
+                                String nameOfDevice = this.traccarService.getNameTcDeviceById((Integer) payload.get("deviceid"));
+                                deviceName.put(key,nameOfDevice);
+                            } else {
+                                if( deviceSpeed.get(key) != null ) {
+                                    deviceSpeed.replace(key, speed);
+                                } else {
+                                    deviceSpeed.put(key,speed);
+                                }
+                            }
+                        }
+                        log.info("payload {}", DebeziumUtils.toJson(payload));
                         this.traccarService.replicateData(table, payload, operation);
                         return;
                     }

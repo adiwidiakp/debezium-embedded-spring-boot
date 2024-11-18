@@ -1,5 +1,8 @@
 package com.bgs.cdc.traccar.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.debezium.engine.RecordChangeEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -26,6 +29,45 @@ public class DebeziumUtils {
                 .filter(fieldName -> struct.get(fieldName) != null)
                 .map(fieldName -> Pair.of(fieldName, struct.get(fieldName)))
                 .collect(toMap(Pair::getKey, Pair::getValue));
+    }
+
+    private final static ObjectMapper mapper = new ObjectMapper();
+
+    public static <T> String toJson(T pojo) {
+        String result;
+        try {
+            result = mapper.writeValueAsString(pojo);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return result;
+    }
+
+    public static <T> T fromJson(String json, Class<T> pojoClass) {
+        T object;
+        try {
+            object = mapper.readValue(json, pojoClass);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return object;
+    }
+
+    public static <T> T fromJson(String json, TypeReference<T> valueTypeRef) {
+        T object;
+        try {
+            object = mapper.<T>readValue(json, valueTypeRef);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            //-- PJMFJ = POJO JSON MAPPER FROM JSON
+            return null;
+        }
+
+        return object;
     }
 
 }
