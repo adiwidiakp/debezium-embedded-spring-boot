@@ -74,6 +74,6 @@ public class TraccarService {
     public String getNameTcDeviceById(Long id) {
         TcDevice tcDevice = devicesRepository.findOneById(id);
 
-        return tcDevice.getName().trim();
+        return tcDevice.getName().replace(" ", "");
     }
 }
