@@ -1,10 +1,10 @@
 package com.bgs.cdc.traccar.listener;
 
 import com.bgs.cdc.traccar.domain.TcDevice;
+import com.bgs.cdc.traccar.repository.DeviceRepository;
 import com.bgs.cdc.traccar.service.TraccarService;
 import com.bgs.cdc.traccar.utils.DebeziumRecordUtils;
 
-import com.bgs.cdc.traccar.utils.DebeziumUtils;
 import io.debezium.config.Configuration;
 import io.debezium.data.Envelope;
 import io.debezium.embedded.Connect;
@@ -18,6 +18,8 @@ import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.source.SourceRecord;
+import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -41,12 +43,18 @@ import org.apache.commons.lang3.tuple.Pair;
 @Component
 public class TraccarListener {
 
-    private final Executor executor = Executors.newSingleThreadExecutor();    
+    private final Executor executor = Executors.newSingleThreadExecutor();
     private final TraccarService traccarService;
     private final DebeziumEngine<RecordChangeEvent<SourceRecord>> debeziumEngine;
 
-    HashMap<Object,Object> deviceName = new HashMap<Object,Object>();
-    HashMap<Object,Object> deviceSpeed = new HashMap<Object,Object>();
+    private final HashMap<Long, String> deviceName;
+    private final HashMap<Long, Float> deviceSpeed;
+
+    @Autowired
+    private DeviceRepository deviceRepository;
+
+    @Autowired
+    private AmqpTemplate amqpTemplate;
 
     @PostConstruct
     private void start() {
@@ -62,58 +70,61 @@ public class TraccarListener {
 
     public TraccarListener(Configuration traccarConnectorConfiguration, TraccarService traccarService) {
         this.debeziumEngine = DebeziumEngine.create(ChangeEventFormat.of(Connect.class))
-            .using(traccarConnectorConfiguration.asProperties())
-            .notifying(this::handleChangeEvent)
-            .build();
+                .using(traccarConnectorConfiguration.asProperties())
+                .notifying(this::handleChangeEvent)
+                .build();
         this.traccarService = traccarService;
+        this.deviceName = new HashMap<>();
+        this.deviceSpeed = new HashMap<>();
     }
 
     private void handleChangeEvent(RecordChangeEvent<SourceRecord> sourceRecordRecordChangeEvent) {
         SourceRecord sourceRecord = sourceRecordRecordChangeEvent.record();
-        Struct sourceRecordChangeValue= (Struct) sourceRecord.value();
-        String table = Optional.ofNullable(DebeziumRecordUtils.getRecordStructValue(sourceRecordChangeValue, "source")).map(s->s.getString("table")).orElse(null);
+        Struct sourceRecordChangeValue = (Struct) sourceRecord.value();
 
         if (sourceRecordChangeValue != null) {
+            String table = Optional.ofNullable(DebeziumRecordUtils.getRecordStructValue(sourceRecordChangeValue, "source")).map(s -> s.getString("table")).orElse(null);
             try {
                 Operation operation = Operation.forCode((String) sourceRecordChangeValue.get(OPERATION));
-
-                if (Envelope.Operation.CREATE == operation || Envelope.Operation.UPDATE == operation || Envelope.Operation.DELETE == operation) {
-                    if (Objects.nonNull(operation)) {
+                if (Objects.nonNull(operation)) {
+                    if (Envelope.Operation.CREATE == operation || Envelope.Operation.UPDATE == operation || Envelope.Operation.DELETE == operation) {
                         String record = operation == Operation.DELETE ? BEFORE : AFTER;
-
                         Struct struct = (Struct) sourceRecordChangeValue.get(record);
                         Map<String, Object> payload = struct.schema().fields().stream()
-                            .map(Field::name)
-                            .filter(fieldName -> struct.get(fieldName) != null)
-                            .map(fieldName -> Pair.of(fieldName, struct.get(fieldName)))
-                            .collect(toMap(Pair::getKey, Pair::getValue));
-//                        log.trace("{} - {} => {}", table, operation.name(), payload);
-                        if(table != null && table.equals("tc_positions") && payload.get("speed")!=null && payload.get("deviceid")!=null) {
-                            Integer key = (Integer) payload.get("deviceid");
-                            float speed = (float) payload.get("speed");
-                            if( deviceName.get( key ) == null ){
-                                String nameOfDevice = this.traccarService.getNameTcDeviceById(Long.valueOf(key));
-                                deviceName.put(key,nameOfDevice);
-                                log.info("added new key value deviceName {} - {}",key, nameOfDevice);
-                            } else {
-                                log.info("key value deviceName existed {} - {}",key, deviceName.get(key));
-                                if( deviceSpeed.get(key) != null ) {
-                                    deviceSpeed.replace(key, speed);
-                                    log.info("replaced key value deviceSpeed {} - {}",key, speed);
-                                } else {
-                                    deviceSpeed.put(key,speed);
-                                    log.info("added new key value deviceSpeed {} - {}",key, speed);
+                                .map(Field::name)
+                                .filter(fieldName -> struct.get(fieldName) != null)
+                                .map(fieldName -> Pair.of(fieldName, struct.get(fieldName)))
+                                .collect(toMap(Pair::getKey, Pair::getValue));
+                        //log.trace("{} - {} => {}", table, operation.name(), payload);
+                        this.traccarService.replicateData(table, payload, operation);
+
+                        if (Objects.equals(table, "tc_positions")) {
+                            var column = Optional.ofNullable(DebeziumRecordUtils.getRecordStructValue(sourceRecordChangeValue, "after"));
+                            Long deviceid = Long.valueOf(column.map(s -> s.getInt32("deviceid")).orElse(0));
+                            Float speed = column.map(s -> s.getFloat32("speed")).orElse(0F);
+                            if (deviceid != 0) {
+                                if (!this.deviceName.containsKey(deviceid)) {
+                                    Optional<TcDevice> device = this.deviceRepository.findById(deviceid);
+                                    if (device.isPresent()) {
+                                        this.deviceName.put(deviceid, device.get().getName());
+                                    }
+                                }
+                                if (this.deviceName.containsKey(deviceid)) {
+                                    if (!this.deviceSpeed.containsKey(deviceid)) {
+                                        this.deviceSpeed.put(deviceid, speed);
+                                    }
+                                    if (!this.deviceSpeed.get(deviceid).equals(speed)) {
+                                        this.deviceSpeed.put(deviceid, speed);
+                                    }
+
+                                    this.amqpTemplate.convertAndSend("cdc-traccar-rabbit.exchange", "cdc-traccar-rabbit.routingkey", this.deviceSpeed.get(deviceid));
                                 }
                             }
                         }
-                        log.info("payload {}", DebeziumUtils.toJson(payload));
-                        // TODO: proses replicate ke db_target diganti dengan nulis ke queue
-//                        this.traccarService.replicateData(table, payload, operation);
-                        return;
                     }
                 }
-            } catch (DataException e){
-                log.trace("SourceRecordChangeValue {} - {} => '{}'",  table, e.getMessage(), sourceRecordChangeValue);
+            } catch (DataException e) {
+                log.trace("SourceRecordChangeValue {} - {} => '{}'", table, e.getMessage(), sourceRecordChangeValue);
             }
         }
     }

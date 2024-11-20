@@ -17,7 +17,7 @@ public class TcEvent {
     @Id
     private Long id;
     private String type;
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date eventtime;
     private int deviceid;
     private int positionid;

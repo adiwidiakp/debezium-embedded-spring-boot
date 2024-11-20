@@ -36,16 +36,16 @@ public class TraccarService {
     public void replicateData(String table, Map<String, Object> data, Operation operation) {
         if (Operation.DELETE == operation) {
             if (tc_devices.equals(table)) {
-               final ObjectMapper mapper = new ObjectMapper();
-               final TcDevice device = mapper.convertValue(data, TcDevice.class);
-               log.info("{} - {} => {}", tc_devices, operation, data);
-               devicesRepository.deleteById(device.getId());
-           } else if (tc_geofences.equals(table)) {
-               final ObjectMapper mapper = new ObjectMapper();
-               final TcGeofence geofence = mapper.convertValue(data, TcGeofence.class);
-               log.info("{} - {} => {}", tc_geofences, operation, data);
-               geofencesRepository.deleteById(geofence.getId());
-           }
+                final ObjectMapper mapper = new ObjectMapper();
+                final TcDevice device = mapper.convertValue(data, TcDevice.class);
+                log.info("{} - {} => {}", tc_devices, operation, data);
+                devicesRepository.deleteById(device.getId());
+            } else if (tc_geofences.equals(table)) {
+                final ObjectMapper mapper = new ObjectMapper();
+                final TcGeofence geofence = mapper.convertValue(data, TcGeofence.class);
+                log.info("{} - {} => {}", tc_geofences, operation, data);
+                geofencesRepository.deleteById(geofence.getId());
+            }
         } else if (Operation.CREATE == operation || Operation.UPDATE == operation) {
             if (tc_positions.equals(table) && Operation.CREATE == operation) {
                 final ObjectMapper mapper = new ObjectMapper();
@@ -68,12 +68,6 @@ public class TraccarService {
                 log.info("{} - {} => {}", tc_geofences, operation, data);
                 geofencesRepository.save(geofence);
             }
-        }  
-    }
-
-    public String getNameTcDeviceById(Long id) {
-        TcDevice tcDevice = devicesRepository.findOneById(id);
-
-        return tcDevice.getName().replace(" ", "");
+        }
     }
 }

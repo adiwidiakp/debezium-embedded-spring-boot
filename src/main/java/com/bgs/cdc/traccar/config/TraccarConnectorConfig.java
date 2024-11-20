@@ -41,36 +41,36 @@ public class TraccarConnectorConfig {
 
     @Value("${traccar.table.include.list}")
     private String tableIncludeList;
-    
+
     @Value("${traccar.message.key.columns}")
     private String keyColumns;
 
     @Bean
     public io.debezium.config.Configuration traccarConnector() throws IOException {
         return io.debezium.config.Configuration.create()
-            .with("name", traccarName)
-            .with("topic.prefix","traccar")
-            .with("connector.class", "io.debezium.connector.mysql.MySqlConnector")
-            .with("tasks.max","1")
-            .with("offset.storage",  "org.apache.kafka.connect.storage.FileOffsetBackingStore")
-            .with("offset.storage.file.filename", offsetFile)
-            .with("offset.flush.interval.ms", 500)
-            .with("include.schema.changes", false)
-            .with("schema.history.internal", "io.debezium.storage.file.history.FileSchemaHistory")
-            .with("schema.history.internal.file.filename", historyFile)
-            //.with("database.serverTimezone", serverTimezone)
-            .with("heartbeat.interval.ms", 15000)  
-            //.with("errors.retry.delay.initial.ms", 300)
-            //.with("errors.retry.delay.max.ms", 10000)
-            //.with("database.server.name", traccarDBHost+"-"+traccarDBName)
-            .with("database.server.id", serverId)
-            .with("database.hostname", traccarDBHost)
-            .with("database.port", traccarDBPort)
-            .with("database.user", traccarDBUserName)
-            .with("database.password", traccarDBPassword)
-            .with("database.whitelist", traccarDBName)
-            .with("table.include.list", tableIncludeList)
-            .with("message.key.columns", keyColumns)
-            .build();
+                .with("name", traccarName)
+                .with("topic.prefix", "traccar")
+                .with("connector.class", "io.debezium.connector.mysql.MySqlConnector")
+                .with("tasks.max", "1")
+                .with("offset.storage", "org.apache.kafka.connect.storage.FileOffsetBackingStore")
+                .with("offset.storage.file.filename", offsetFile)
+                .with("offset.flush.interval.ms", 500)
+                .with("include.schema.changes", false)
+                .with("schema.history.internal", "io.debezium.storage.file.history.FileSchemaHistory")
+                .with("schema.history.internal.file.filename", historyFile)
+                //.with("database.serverTimezone", serverTimezone)
+                .with("heartbeat.interval.ms", 15000)
+                //.with("errors.retry.delay.initial.ms", 300)
+                //.with("errors.retry.delay.max.ms", 10000)
+                //.with("database.server.name", traccarDBHost+"-"+traccarDBName)
+                .with("database.server.id", serverId)
+                .with("database.hostname", traccarDBHost)
+                .with("database.port", traccarDBPort)
+                .with("database.user", traccarDBUserName)
+                .with("database.password", traccarDBPassword)
+                .with("database.whitelist", traccarDBName)
+                .with("table.include.list", tableIncludeList)
+                .with("message.key.columns", keyColumns)
+                .build();
     }
 }

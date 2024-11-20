@@ -8,7 +8,6 @@ import org.apache.kafka.connect.data.Struct;
 import java.util.Objects;
 
 /**
- * 
  * @author Mac
  * @since 2019-04-22 15:20
  */
@@ -29,11 +28,11 @@ public class DebeziumRecordUtils {
     }
 
     public static String getDDL(Struct payload) {
-        return getStructStringProperties(payload,"ddl");
+        return getStructStringProperties(payload, "ddl");
     }
 
     public static String getDatabaseName(Struct payload) {
-        return getStructStringProperties(payload,"databaseName");
+        return getStructStringProperties(payload, "databaseName");
     }
 
     public static String getStructStringProperties(Struct payload, String properties) {

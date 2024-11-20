@@ -21,7 +21,7 @@ public class TcPosition {
     private Long id;
     private String protocol;
     private int deviceid;
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date servertime;
     //@JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @Temporal(TemporalType.TIMESTAMP)
