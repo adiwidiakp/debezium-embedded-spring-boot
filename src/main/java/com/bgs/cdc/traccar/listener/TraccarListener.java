@@ -122,9 +122,9 @@ public class TraccarListener {
                                         if (!deviceService.getDeviceSpeed(String.valueOf(deviceid)).equals(speed)) {
                                             deviceService.saveDeviceSpeed(String.valueOf(deviceid), speed);
                                         }
+                                        this.amqpTemplate.convertAndSend("cdc-traccar-rabbit.exchange", "cdc-traccar-rabbit.routingkey", deviceService.getDeviceSpeed(String.valueOf(deviceid)));
                                     }
 
-                                    this.amqpTemplate.convertAndSend("cdc-traccar-rabbit.exchange", "cdc-traccar-rabbit.routingkey", deviceService.getDeviceSpeed(String.valueOf(deviceid)));
                                 }
                             }
                         }
