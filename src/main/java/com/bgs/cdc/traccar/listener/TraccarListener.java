@@ -2,6 +2,8 @@ package com.bgs.cdc.traccar.listener;
 
 import com.bgs.cdc.traccar.domain.TcDevice;
 import com.bgs.cdc.traccar.repository.DeviceRepository;
+import com.bgs.cdc.traccar.service.DeviceService;
+import com.bgs.cdc.traccar.service.RedisService;
 import com.bgs.cdc.traccar.service.TraccarService;
 import com.bgs.cdc.traccar.utils.DebeziumRecordUtils;
 
@@ -20,6 +22,7 @@ import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -47,14 +50,14 @@ public class TraccarListener {
     private final TraccarService traccarService;
     private final DebeziumEngine<RecordChangeEvent<SourceRecord>> debeziumEngine;
 
-    private final HashMap<Long, String> deviceName;
-    private final HashMap<Long, Float> deviceSpeed;
-
     @Autowired
     private DeviceRepository deviceRepository;
 
     @Autowired
     private AmqpTemplate amqpTemplate;
+
+    @Autowired
+    private DeviceService deviceService;
 
     @PostConstruct
     private void start() {
@@ -68,14 +71,15 @@ public class TraccarListener {
         }
     }
 
-    public TraccarListener(Configuration traccarConnectorConfiguration, TraccarService traccarService) {
+    public TraccarListener(Configuration traccarConnectorConfiguration, TraccarService traccarService,
+                           DeviceService deviceService, RedisTemplate<String, Object> redisTemplate) {
         this.debeziumEngine = DebeziumEngine.create(ChangeEventFormat.of(Connect.class))
                 .using(traccarConnectorConfiguration.asProperties())
                 .notifying(this::handleChangeEvent)
                 .build();
         this.traccarService = traccarService;
-        this.deviceName = new HashMap<>();
-        this.deviceSpeed = new HashMap<>();
+        this.deviceService = deviceService;
+        this.deviceService = new DeviceService(redisTemplate);
     }
 
     private void handleChangeEvent(RecordChangeEvent<SourceRecord> sourceRecordRecordChangeEvent) {
@@ -103,21 +107,24 @@ public class TraccarListener {
                             Long deviceid = Long.valueOf(column.map(s -> s.getInt32("deviceid")).orElse(0));
                             Float speed = column.map(s -> s.getFloat32("speed")).orElse(0F);
                             if (deviceid != 0) {
-                                if (!this.deviceName.containsKey(deviceid)) {
+                                if (deviceService.getDeviceName(String.valueOf(deviceid))==null) {
                                     Optional<TcDevice> device = this.deviceRepository.findById(deviceid);
                                     if (device.isPresent()) {
-                                        this.deviceName.put(deviceid, device.get().getName());
+//                                        this.deviceName.put(deviceid, device.get().getName());
+                                        deviceService.saveDeviceName(String.valueOf(deviceid), device.get().getName());
                                     }
                                 }
-                                if (this.deviceName.containsKey(deviceid)) {
-                                    if (!this.deviceSpeed.containsKey(deviceid)) {
-                                        this.deviceSpeed.put(deviceid, speed);
+                                if (deviceService.getDeviceName(String.valueOf(deviceid))!=null) {
+                                    if (deviceService.getDeviceSpeed(String.valueOf(deviceid))!=null) {
+                                        deviceService.saveDeviceSpeed(String.valueOf(deviceid), speed);
                                     }
-                                    if (!this.deviceSpeed.get(deviceid).equals(speed)) {
-                                        this.deviceSpeed.put(deviceid, speed);
+                                    if(deviceService.getDeviceSpeed(String.valueOf(deviceid))!=null) {
+                                        if (!deviceService.getDeviceSpeed(String.valueOf(deviceid)).equals(speed)) {
+                                            deviceService.saveDeviceSpeed(String.valueOf(deviceid), speed);
+                                        }
                                     }
 
-                                    this.amqpTemplate.convertAndSend("cdc-traccar-rabbit.exchange", "cdc-traccar-rabbit.routingkey", this.deviceSpeed.get(deviceid));
+                                    this.amqpTemplate.convertAndSend("cdc-traccar-rabbit.exchange", "cdc-traccar-rabbit.routingkey", deviceService.getDeviceSpeed(String.valueOf(deviceid)));
                                 }
                             }
                         }
