@@ -106,21 +106,25 @@ public class TraccarListener {
                             var column = Optional.ofNullable(DebeziumRecordUtils.getRecordStructValue(sourceRecordChangeValue, "after"));
                             Long deviceid = Long.valueOf(column.map(s -> s.getInt32("deviceid")).orElse(0));
                             Float speed = column.map(s -> s.getFloat32("speed")).orElse(0F);
-                            if (deviceid != 0) {
+                            log.info("deviceid {} speed {}", deviceid, speed);
+                            log.info("deviceid compare result {}", deviceid > 0L);
+                            if (deviceid > 0L) {
+                                log.info("get deviceName key {} value {}", deviceid, deviceService.getDeviceName(String.valueOf(deviceid)));
                                 if (deviceService.getDeviceName(String.valueOf(deviceid))==null) {
                                     Optional<TcDevice> device = this.deviceRepository.findById(deviceid);
                                     if (device.isPresent()) {
-//                                        this.deviceName.put(deviceid, device.get().getName());
-                                        deviceService.saveDeviceName(String.valueOf(deviceid), device.get().getName());
+                                        log.info("device {}", device.get().getName());
+                                        deviceService.saveDeviceName(String.valueOf(deviceid), device.get().getName().replace(" ",""));
+                                        log.info("save to deviceName {} {}", deviceid, device.get().getName());
                                     }
-                                }
-                                if (deviceService.getDeviceName(String.valueOf(deviceid))!=null) {
-                                    if (deviceService.getDeviceSpeed(String.valueOf(deviceid))!=null) {
+                                } else {
+                                    if (deviceService.getDeviceSpeed(String.valueOf(deviceid))==null) {
                                         deviceService.saveDeviceSpeed(String.valueOf(deviceid), speed);
-                                    }
-                                    if(deviceService.getDeviceSpeed(String.valueOf(deviceid))!=null) {
+                                        log.info("save to deviceSpeed {} {}", deviceid, speed);
+                                    } else {
                                         if (!deviceService.getDeviceSpeed(String.valueOf(deviceid)).equals(speed)) {
                                             deviceService.saveDeviceSpeed(String.valueOf(deviceid), speed);
+                                            log.info("save to deviceSpeed {} {}", deviceid, speed);
                                         }
                                         this.amqpTemplate.convertAndSend("cdc-traccar-rabbit.exchange", "cdc-traccar-rabbit.routingkey", deviceService.getDeviceSpeed(String.valueOf(deviceid)));
                                     }
