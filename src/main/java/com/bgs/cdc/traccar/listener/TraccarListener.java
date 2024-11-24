@@ -5,6 +5,7 @@ import com.bgs.cdc.traccar.repository.DeviceRepository;
 import com.bgs.cdc.traccar.service.DeviceService;
 import com.bgs.cdc.traccar.service.RedisService;
 import com.bgs.cdc.traccar.service.TraccarService;
+import com.bgs.cdc.traccar.service.RabbitMqService;
 import com.bgs.cdc.traccar.utils.DebeziumRecordUtils;
 
 import io.debezium.config.Configuration;
@@ -49,6 +50,7 @@ public class TraccarListener {
     private final Executor executor = Executors.newSingleThreadExecutor();
     private final TraccarService traccarService;
     private final DebeziumEngine<RecordChangeEvent<SourceRecord>> debeziumEngine;
+    private final RabbitMqService rabbitMqService;
 
     @Autowired
     private DeviceRepository deviceRepository;
@@ -72,7 +74,7 @@ public class TraccarListener {
     }
 
     public TraccarListener(Configuration traccarConnectorConfiguration, TraccarService traccarService,
-                           DeviceService deviceService, RedisTemplate<String, Object> redisTemplate) {
+                           DeviceService deviceService, RedisTemplate<String, Object> redisTemplate, RabbitMqService rabbitMqService) {
         this.debeziumEngine = DebeziumEngine.create(ChangeEventFormat.of(Connect.class))
                 .using(traccarConnectorConfiguration.asProperties())
                 .notifying(this::handleChangeEvent)
@@ -80,6 +82,7 @@ public class TraccarListener {
         this.traccarService = traccarService;
         this.deviceService = deviceService;
         this.deviceService = new DeviceService(redisTemplate);
+        this.rabbitMqService = rabbitMqService;
     }
 
     private void handleChangeEvent(RecordChangeEvent<SourceRecord> sourceRecordRecordChangeEvent) {
@@ -110,15 +113,15 @@ public class TraccarListener {
                             log.info("deviceid compare result {}", deviceid > 0L);
                             if (deviceid > 0L) {
                                 log.info("get deviceName key {} value {}", deviceid, deviceService.getDeviceName(String.valueOf(deviceid)));
-                                if (deviceService.getDeviceName(String.valueOf(deviceid))==null) {
+                                if (deviceService.getDeviceName(String.valueOf(deviceid)) == null) {
                                     Optional<TcDevice> device = this.deviceRepository.findById(deviceid);
                                     if (device.isPresent()) {
                                         log.info("device {}", device.get().getName());
-                                        deviceService.saveDeviceName(String.valueOf(deviceid), device.get().getName().replace(" ",""));
+                                        deviceService.saveDeviceName(String.valueOf(deviceid), device.get().getName().replace(" ", ""));
                                         log.info("save to deviceName {} {}", deviceid, device.get().getName());
                                     }
                                 } else {
-                                    if (deviceService.getDeviceSpeed(String.valueOf(deviceid))==null) {
+                                    if (deviceService.getDeviceSpeed(String.valueOf(deviceid)) == null) {
                                         deviceService.saveDeviceSpeed(String.valueOf(deviceid), speed);
                                         log.info("save to deviceSpeed {} {}", deviceid, speed);
                                     } else {
@@ -126,9 +129,9 @@ public class TraccarListener {
                                             deviceService.saveDeviceSpeed(String.valueOf(deviceid), speed);
                                             log.info("save to deviceSpeed {} {}", deviceid, speed);
                                         }
-                                        this.amqpTemplate.convertAndSend("cdc-traccar-rabbit.exchange", "cdc-traccar-rabbit.routingkey", deviceService.getDeviceSpeed(String.valueOf(deviceid)));
+                                        String queueName = "obu/speed/" + deviceService.getDeviceName(String.valueOf(deviceid)).replaceAll("\\s+", "");
+                                        this.rabbitMqService.sendMessage(queueName, deviceService.getDeviceSpeed(String.valueOf(deviceid)));
                                     }
-
                                 }
                             }
                         }
