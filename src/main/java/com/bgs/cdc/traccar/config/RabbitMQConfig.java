@@ -17,11 +17,11 @@ import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 
 @Configuration
-public class RabbitMqConfig implements RabbitListenerConfigurer {
+public class RabbitMQConfig implements RabbitListenerConfigurer {
     private final ConnectionFactory connectionFactory;
     private final RabbitMqModel rabbitMqModel;
 
-    public RabbitMqConfig(ConnectionFactory connectionFactory, RabbitMqModel rabbitMqModel) {
+    public RabbitMQConfig(ConnectionFactory connectionFactory, RabbitMqModel rabbitMqModel) {
         this.connectionFactory = connectionFactory;
         this.rabbitMqModel = rabbitMqModel;
     }

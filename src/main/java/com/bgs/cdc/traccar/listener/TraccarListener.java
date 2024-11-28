@@ -18,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.source.SourceRecord;
-//import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -35,7 +34,6 @@ import static io.debezium.data.Envelope.FieldName.*;
 import static io.debezium.data.Envelope.Operation;
 
 
-
 @Slf4j
 @Component
 public class TraccarListener {
@@ -46,9 +44,6 @@ public class TraccarListener {
 
     @Autowired
     private DeviceRepository deviceRepository;
-
-    //@Autowired
-    //private AmqpTemplate amqpTemplate;
 
     @Autowired
     private DeviceService deviceService;
@@ -65,7 +60,7 @@ public class TraccarListener {
         }
     }
 
-    public TraccarListener(Configuration traccarConnectorConfiguration, 
+    public TraccarListener(Configuration traccarConnectorConfiguration,
                            DeviceService deviceService, RedisTemplate<String, Object> redisTemplate, RabbitMqService rabbitMqService) {
         this.debeziumEngine = DebeziumEngine.create(ChangeEventFormat.of(Connect.class))
                 .using(traccarConnectorConfiguration.asProperties())
@@ -99,31 +94,24 @@ public class TraccarListener {
                         if (Objects.equals(table, "tc_positions")) {
                             var column = Optional.ofNullable(DebeziumRecordUtils.getRecordStructValue(sourceRecordChangeValue, "after"));
                             Long deviceid = Long.valueOf(column.map(s -> s.getInt32("deviceid")).orElse(0));
-                            Float speed = column.map(s -> s.getFloat32("speed")).orElse(0F);
-                            log.debug("deviceid {} speed {}", deviceid, speed);
-                            log.debug("deviceid compare result {}", deviceid > 0L);
-                            if (deviceid > 0L) {
-                                log.debug("get deviceName key {} value {}", deviceid, deviceService.getDeviceName(String.valueOf(deviceid)));
+                            if (deviceid != 0) {
                                 if (deviceService.getDeviceName(String.valueOf(deviceid)) == null) {
                                     Optional<TcDevice> device = this.deviceRepository.findById(deviceid);
-                                    if (device.isPresent()) {
-                                        log.debug("device {}", device.get().getName());
-                                        deviceService.saveDeviceName(String.valueOf(deviceid), device.get().getName().replace(" ", ""));
-                                        log.debug("save to deviceName {} {}", deviceid, device.get().getName());
-                                    }
-                                } else {
-                                    if (deviceService.getDeviceSpeed(String.valueOf(deviceid)) == null) {
-                                        deviceService.saveDeviceSpeed(String.valueOf(deviceid), speed);
-                                        log.debug("save to deviceSpeed {} {}", deviceid, speed);
-                                    } else {
-                                        if (!deviceService.getDeviceSpeed(String.valueOf(deviceid)).equals(speed)) {
-                                            deviceService.saveDeviceSpeed(String.valueOf(deviceid), speed);
-                                            log.debug("save to deviceSpeed {} {}", deviceid, speed);
-                                            String queueName = "obu/speed/" + deviceService.getDeviceName(String.valueOf(deviceid)).replaceAll("\\s+", "");
-                                            log.info("Sending MQTT Messgaes to Queue {} with value {}", queueName, deviceService.getDeviceSpeed(String.valueOf(deviceid)));
-                                            this.rabbitMqService.sendMessage(queueName, deviceService.getDeviceSpeed(String.valueOf(deviceid)));
-                                        }
-                                    }
+                                    device.ifPresent(tcDevice -> deviceService.saveDeviceName(String.valueOf(deviceid), tcDevice.getName().replace(" ", "")));
+                                }
+                                Float speed = column.map(s -> s.getFloat32("speed")).orElse(0f);
+                                boolean isSend = false;
+                                if (deviceService.getDeviceSpeed(String.valueOf(deviceid)) == null) {
+                                    deviceService.saveDeviceSpeed(String.valueOf(deviceid), Double.valueOf(speed));
+                                    isSend = true;
+                                }
+                                if (!deviceService.getDeviceSpeed(String.valueOf(deviceid)).equals(Double.valueOf(speed))) {
+                                    deviceService.saveDeviceSpeed(String.valueOf(deviceid), Double.valueOf(speed));
+                                    isSend = true;
+                                }
+                                if (isSend) {
+                                    String queueName = "obu/speed/" + deviceService.getDeviceName(String.valueOf(deviceid)).replaceAll("\\s+", "");
+                                    this.rabbitMqService.sendMessage(queueName, speed);
                                 }
                             }
                         }
@@ -131,7 +119,7 @@ public class TraccarListener {
                 }
             } catch (DataException e) {
                 log.trace("SourceRecordChangeValue {} - {} => '{}'", table, e.getMessage(), sourceRecordChangeValue);
-                return; 
+                return;
             }
         }
     }

@@ -10,7 +10,7 @@ import java.util.Map;
 public class DeviceService {
 
     private final HashOperations<String, String, String> deviceNameOps;
-    private final HashOperations<String, String, Float> deviceSpeedOps;
+    private final HashOperations<String, String, Double> deviceSpeedOps;
 
     public DeviceService(RedisTemplate<String, Object> redisTemplate) {
         this.deviceNameOps = redisTemplate.opsForHash();
@@ -28,12 +28,12 @@ public class DeviceService {
     }
 
     // Store device speed
-    public void saveDeviceSpeed(String deviceId, Float speed) {
+    public void saveDeviceSpeed(String deviceId, Double speed) {
         deviceSpeedOps.put("deviceSpeed", deviceId, speed);
     }
 
     // Retrieve device speed
-    public Float getDeviceSpeed(String deviceId) {
+    public Double getDeviceSpeed(String deviceId) {
         return deviceSpeedOps.get("deviceSpeed", deviceId);
     }
 
@@ -43,7 +43,7 @@ public class DeviceService {
     }
 
     // Retrieve all device speeds
-    public Map<String, Float> getAllDeviceSpeeds() {
+    public Map<String, Double> getAllDeviceSpeeds() {
         return deviceSpeedOps.entries("deviceSpeed");
     }
 }
