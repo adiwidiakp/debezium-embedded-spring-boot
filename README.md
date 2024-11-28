@@ -31,10 +31,10 @@ For more MySQL connector details check here [link](https://debezium.io/documenta
 ### Source
 
 ```
-docker run -d --name mariadb1  -p 3306:3306 -e MARIADB_ROOT_PASSWORD=root  -e MARIADB_REPLICATION_USER=user  -e MARIADB_REPLICATION_PASSWORD=password  mariadb:10.5 --server-id=1 --log-bin --log-basename=mariadb1 --binlog-format=row --performance-schema=ON
+docker run -d --name mariadb1  -p 3306:3306 -e MARIADB_ROOT_PASSWORD=root  -e MARIADB_REPLICATION_USER=data-cdc  -e MARIADB_REPLICATION_PASSWORD=SzQA9fG0Wkn6Ogxz2Iei97N4  mariadb:10.5 --server-id=1 --log-bin --log-basename=mariadb1 --binlog-format=row --performance-schema=ON
 
 
-GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'user'@'%';
+GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'data-cdc'@'%';
 
 FLUSH PRIVILEGES;
 
