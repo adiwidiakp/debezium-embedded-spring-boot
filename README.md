@@ -68,6 +68,16 @@ CREATE TABLE `tc_positions` (
 ) ENGINE=InnoDB;
 ```
 
+### Running RabbitMQ
+```
+docker run -d --name rabbitmq -p 5672:5672 rabbitmq:3.13.7-alpine
+```
+
+### Running REDIS
+```
+docker run -d --name redis -p 6379:6379 redis:6.2.7-alpine
+```
+
 ### Testing Insert
 ```
 INSERT INTO `tc_positions` SELECT * FROM db_traccar.tc_positions limit 1;
