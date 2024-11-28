@@ -86,9 +86,10 @@ public class TraccarListener {
                         return;
                     }
                 }
-            } catch (DataException e){
-                log.trace("SourceRecordChangeValue {} - {} => '{}'",  table, e.getMessage(), sourceRecordChangeValue);
-                return; // avoid debezium error
+            } catch (DataException de) {
+                log.trace("DataException - sourceRecordChangeValue {} - {} => '{}'",  table, de.getMessage(), sourceRecordChangeValue);
+            } catch (Exception e) {
+                log.trace("Exception - sourceRecordChangeValue {} - {} => '{}'",  table, e.getMessage(), sourceRecordChangeValue);
             }
         }
     }
