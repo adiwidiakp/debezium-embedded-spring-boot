@@ -87,9 +87,9 @@ public class TraccarListener {
                     }
                 }
             } catch (DataException de) {
-                log.trace("DataException - sourceRecordChangeValue {} - {} => '{}'",  table, de.getMessage(), sourceRecordChangeValue);
+                log.error("DataException - sourceRecordChangeValue {} - {} => '{}'",  table, de.getMessage(), sourceRecordChangeValue);
             } catch (Exception e) {
-                log.trace("Exception - sourceRecordChangeValue {} - {} => '{}'",  table, e.getMessage(), sourceRecordChangeValue);
+                log.error("Exception - sourceRecordChangeValue {} - {} => '{}'",  table, e.getMessage(), sourceRecordChangeValue);
             }
         }
     }
