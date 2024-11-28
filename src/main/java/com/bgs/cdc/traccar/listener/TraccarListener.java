@@ -88,6 +88,7 @@ public class TraccarListener {
                 }
             } catch (DataException e){
                 log.trace("SourceRecordChangeValue {} - {} => '{}'",  table, e.getMessage(), sourceRecordChangeValue);
+                return; // avoid debezium error
             }
         }
     }
