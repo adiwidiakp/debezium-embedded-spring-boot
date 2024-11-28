@@ -30,3 +30,6 @@ build
 
 ### VS Code ###
 .vscode/
+
+### offset and history file produced by debezium ###
+*.dat
