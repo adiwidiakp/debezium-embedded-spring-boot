@@ -70,12 +70,12 @@ CREATE TABLE `tc_positions` (
 
 ### Running RabbitMQ
 ```
-docker run -d --name rabbitmq -p 5672:5672 rabbitmq:3.13.7-alpine
+docker run -d --rm --name rabbitmq -p 5672:5672 -p 1883:1883 rabbitmq:3.13-alpine
 ```
 
 ### Running REDIS
 ```
-docker run -d --name redis -p 6379:6379 redis:6.2.7-alpine
+docker run -d --rm --name redis -p 6379:6379 redis:6.2.7-alpine
 ```
 
 ### Testing Insert
