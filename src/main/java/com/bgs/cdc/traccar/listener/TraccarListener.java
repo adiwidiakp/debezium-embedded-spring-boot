@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -44,11 +45,11 @@ public class TraccarListener {
     private final RabbitMqService rabbitMqService;
     private final MqttService mqttService;
 
-    @Autowired
-    private DeviceRepository deviceRepository;
+    HashMap<String,Object> deviceName = new HashMap<String,Object>();
+    HashMap<String,Object> deviceSpeed = new HashMap<String,Object>();
 
     @Autowired
-    private DeviceService deviceService;
+    private DeviceRepository deviceRepository;
 
     @PostConstruct
     private void start() {
@@ -62,14 +63,11 @@ public class TraccarListener {
         }
     }
 
-    public TraccarListener(Configuration traccarConnectorConfiguration,
-                           DeviceService deviceService, RedisTemplate<String, Object> redisTemplate, RabbitMqService rabbitMqService, MqttService mqttService) {
+    public TraccarListener(Configuration traccarConnectorConfiguration, RabbitMqService rabbitMqService, MqttService mqttService) {
         this.debeziumEngine = DebeziumEngine.create(ChangeEventFormat.of(Connect.class))
                 .using(traccarConnectorConfiguration.asProperties())
                 .notifying(this::handleChangeEvent)
                 .build();
-        this.deviceService = deviceService;
-        this.deviceService = new DeviceService(redisTemplate);
         this.rabbitMqService = rabbitMqService;
         this.mqttService = mqttService;
     }
@@ -89,21 +87,21 @@ public class TraccarListener {
                             var column = Optional.ofNullable(DebeziumRecordUtils.getRecordStructValue(sourceRecordChangeValue, "after"));
                             Long deviceid = Long.valueOf(column.map(s -> s.getInt32("deviceid")).orElse(0));
                             if (deviceid != 0) {
-                                if (deviceService.getDeviceName(String.valueOf(deviceid)) == null) {
+                                if (deviceName.get(String.valueOf(deviceid)) == null) {
                                     Optional<TcDevice> device = this.deviceRepository.findById(deviceid);
-                                    device.ifPresent(tcDevice -> deviceService.saveDeviceName(String.valueOf(deviceid), tcDevice.getName().replace(" ", "")));
+                                    device.ifPresent(tcDevice -> deviceName.put(String.valueOf(deviceid), tcDevice.getName().replace(" ", "")));
                                 }
                                 Float speed = column.map(s -> s.getFloat32("speed")).orElse(0f);
                                 boolean isSend = false;
-                                if (deviceService.getDeviceSpeed(String.valueOf(deviceid)) == null) {
-                                    deviceService.saveDeviceSpeed(String.valueOf(deviceid), Double.valueOf(speed));
+                                if (deviceSpeed.get(String.valueOf(deviceid)) == null) {
+                                    deviceSpeed.put(String.valueOf(deviceid), Double.valueOf(speed));
                                     isSend = true;
-                                } else if (!deviceService.getDeviceSpeed(String.valueOf(deviceid)).equals(Double.valueOf(speed))) {
-                                    deviceService.saveDeviceSpeed(String.valueOf(deviceid), Double.valueOf(speed));
+                                } else if (!deviceSpeed.get(String.valueOf(deviceid)).equals(Double.valueOf(speed))) {
+                                    deviceSpeed.put(String.valueOf(deviceid), Double.valueOf(speed));
                                     isSend = true;
                                 }
                                 if (isSend) {
-                                    String queueName = "obu/speed/" + deviceService.getDeviceName(String.valueOf(deviceid)).replaceAll("\\s+", "");
+                                    String queueName = "obu/speed/" + deviceName.get(String.valueOf(deviceid)).toString().replaceAll("\\s+", "");
                                     this.mqttService.publishMessage(queueName, speed);
                                     //this.rabbitMqService.sendMessage(queueName, speed);
                                 }
