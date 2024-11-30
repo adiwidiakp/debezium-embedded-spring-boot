@@ -102,8 +102,8 @@ public class TraccarListener {
                                 }
                                 if (isSend) {
                                     String queueName = "obu/speed/" + deviceName.get(String.valueOf(deviceid)).toString().replaceAll("\\s+", "");
-                                    this.mqttService.publishMessage(queueName, speed);
-                                    //this.rabbitMqService.sendMessage(queueName, speed);
+//                                    this.mqttService.publishMessage(queueName, speed);
+                                    this.rabbitMqService.sendMessage(queueName, speed);
                                 }
                             }
                         }
