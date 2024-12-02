@@ -1,5 +1,6 @@
 package com.bgs.cdc.traccar.listener;
 
+//import com.bgs.cdc.traccar.App;
 import com.bgs.cdc.traccar.service.TraccarService;
 import com.bgs.cdc.traccar.utils.DebeziumRecordUtils;
 
@@ -16,6 +17,7 @@ import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.source.SourceRecord;
+//import org.springframework.boot.SpringApplication;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -44,30 +46,35 @@ public class TraccarListener {
 
     @PostConstruct
     private void start() {
+        log.info("Starting debezium engine.");
         this.executor.execute(debeziumEngine);
     }
 
     @PreDestroy
     private void stop() throws IOException {
         if (Objects.nonNull(this.debeziumEngine)) {
+            log.warn("Stopping debezium engine.");
             this.debeziumEngine.close();
+            //log.warn("Stopping Spring boot.");
+            //SpringApplication.exit(App.ctx, () -> 1);
         }
     }
 
     public TraccarListener(Configuration traccarConnectorConfiguration, TraccarService traccarService) {
+        this.traccarService = traccarService;
         this.debeziumEngine = DebeziumEngine.create(ChangeEventFormat.of(Connect.class))
             .using(traccarConnectorConfiguration.asProperties())
             .notifying(this::handleChangeEvent)
             .build();
-        this.traccarService = traccarService;
     }
 
     private void handleChangeEvent(RecordChangeEvent<SourceRecord> sourceRecordRecordChangeEvent) {
         SourceRecord sourceRecord = sourceRecordRecordChangeEvent.record();
         Struct sourceRecordChangeValue= (Struct) sourceRecord.value();
-        String table = Optional.ofNullable(DebeziumRecordUtils.getRecordStructValue(sourceRecordChangeValue, "source")).map(s->s.getString("table")).orElse(null);
 
         if (sourceRecordChangeValue != null) {
+            String table = Optional.ofNullable(DebeziumRecordUtils.getRecordStructValue(sourceRecordChangeValue, "source")).map(s->s.getString("table")).orElse(null);
+
             try {
                 Operation operation = Operation.forCode((String) sourceRecordChangeValue.get(OPERATION));
 
@@ -86,8 +93,12 @@ public class TraccarListener {
                         return;
                     }
                 }
-            } catch (DataException e){
-                log.trace("SourceRecordChangeValue {} - {} => '{}'",  table, e.getMessage(), sourceRecordChangeValue);
+            } catch (DataException de) {
+                log.warn("DataException - sourceRecordChangeValue {} - {} => '{}'",  table, de.getMessage(), sourceRecordChangeValue);
+                //SpringApplication.exit(App.ctx, () -> 1);
+            } catch (Exception e) {
+                log.error("Exception - sourceRecordChangeValue {} - {} => '{}'",  table, e.getMessage(), sourceRecordChangeValue);
+                //SpringApplication.exit(App.ctx, () -> 1);
             }
         }
     }

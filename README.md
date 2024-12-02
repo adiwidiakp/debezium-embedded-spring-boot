@@ -4,19 +4,17 @@ This project aims to show how to use Debezium as database monitor to help perfor
 ## REFERENCES
 
 [Debezium](https://debezium.io/) is an open source distributed platform for __Change Data Capture__ (CDC).
-[MySQL](https://www.mysql.com/) database used in this example
+[MariaDB](https://www.mariadb.com/) database used in this project
 
 <br>
 
 ## OVERVIEW
-In this project is showed how to implement Debezium programmatically and monitor the tables customer and products. The table customer has <span style="color:red">__ALL__</span> fields are monitored, products <span style="color:red">__ONLY__</span> when his id and price.
-
-Debezium has connectors for many databases as MySQL, PostgreSQL, SQL Server, Oracle, etc. (see all conectors here)[https://debezium.io/documentation/reference/stable/connectors/index.html]
+In this project is showed how to implement Debezium programmatically and monitor the tables tc_positions, tc_devices, tc_events, and tc_geofences. 
 
 <br>
 
 ## ATENTTION
-Each database has your on rules to enable/use CDC, check for your database. For MySQL:
+Each database has your on rules to enable/use CDC, check for your database. For MariadDB:
 
 | Property | Description                                                                                                                                                                                            |
 | :------- |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -26,122 +24,202 @@ Each database has your on rules to enable/use CDC, check for your database. For 
 | binlog_row_image | The binlog_row_image must be set to FULL or full.                                                                                                                                                      |
 | expire_logs_days | This is the number of days for automatic binlog file removal. The default is 0, which means no automatic removal. Set the value to match the needs of your environment. See MySQL purges binlog files. |
 
-For more MySQL details check here [link](https://debezium.io/documentation/reference/stable/connectors/mysql.html#:~:text=Descriptions%20of%20MySQL%20binlog%20configuration%20properties).
+For more MySQL connector details check here [link](https://debezium.io/documentation/reference/stable/connectors/mysql.html#:~:text=Descriptions%20of%20MySQL%20binlog%20configuration%20properties).
 
-## TESTING
-
-Before start add bellow line into your hosts file
-```shell
-127.0.0.1	kafka
-```
-
-1. Start your servers instances with Docker. Open the terminal / command prompt, go to the application folder and type:
-```shell
-docker-compose up -d
-```
-2. Connect to MySQL docker instance:
-```shell
-docker exec -it mysql-server bash
-```
-
-3. Once inside, login into MySQL server:
-```shell
-mysql --user=root --password=root
-```
-
-4. With your IDE or using another terminal, run the application:
-```shell
-./mvnw spring-boot:run
-```
-
-5. Return to mysql terminal and select the database:
-```shell
-USE storeDB;
-```
-
-6. And, run INSERT:
-```shell
-INSERT INTO storeDB.customer (first_name, last_name, email) VALUES ('John','Doe','john.doe@acme.com');
-```
-
-7. Look in the IDE console or in the other terminal, you will see a log like:
-```log
-2023-03-31 13:37:02.246  INFO 21312 --- [pool-1-thread-1] i.d.connector.common.BaseSourceTask      : 9 records sent during previous 00:02:51.653, last recorded offset: {transaction_id=null, ts_sec=1680280622, file=binlog.000002, pos=4440, row=1, server_id=1, event=3}
-2023-03-31 13:37:02.246 DEBUG 21312 --- [pool-1-thread-1] b.c.w.listener.DebeziumListener          : Key = Struct{id=1}, Value = Struct{after=Struct{id=1,email=john.doe@acme.com,first_name=John,last_name=Doe},source=Struct{version=1.9.7.Final,connector=mysql,name=store-mysql-db-server,ts_ms=1680280622000,db=storeDB,table=customer,server_id=1,file=binlog.000002,pos=4778,row=0,thread=11},op=c,ts_ms=1680280622099}
-2023-03-31 13:37:02.246 DEBUG 21312 --- [pool-1-thread-1] b.c.w.listener.DebeziumListener          : SourceRecordChangeValue = 'Struct{after=Struct{id=1,email=john.doe@acme.com,first_name=John,last_name=Doe},source=Struct{version=1.9.7.Final,connector=mysql,name=store-mysql-db-server,ts_ms=1680280622000,db=storeDB,table=customer,server_id=1,file=binlog.000002,pos=4778,row=0,thread=11},op=c,ts_ms=1680280622099}'
-2023-03-31 13:37:02.248 DEBUG 21312 --- [pool-1-thread-1] br.com.williamrocha.utils.DebeziumUtils  : Key = Struct{id=1}, Value = Struct{after=Struct{id=1,email=john.doe@acme.com,first_name=John,last_name=Doe},source=Struct{version=1.9.7.Final,connector=mysql,name=store-mysql-db-server,ts_ms=1680280622000,db=storeDB,table=customer,server_id=1,file=binlog.000002,pos=4778,row=0,thread=11},op=c,ts_ms=1680280622099}
-2023-03-31 13:37:02.248 DEBUG 21312 --- [pool-1-thread-1] br.com.williamrocha.utils.DebeziumUtils  : Key = Struct{id=1}, Value = Struct{after=Struct{id=1,email=john.doe@acme.com,first_name=John,last_name=Doe},source=Struct{version=1.9.7.Final,connector=mysql,name=store-mysql-db-server,ts_ms=1680280622000,db=storeDB,table=customer,server_id=1,file=binlog.000002,pos=4778,row=0,thread=11},op=c,ts_ms=1680280622099}
-2023-03-31 13:37:02.253  INFO 21312 --- [pool-1-thread-1] b.c.w.listener.DebeziumListener          : Updated Data Operation:CREATE Before: null After: {last_name=Doe, id=1, first_name=John, email=john.doe@acme.com}
-2023-03-31 13:37:02.267  INFO 21312 --- [pool-1-thread-1] b.c.w.listener.DebeziumListener          : Updated Data JSON Operation:CREATE Before: null After: {"last_name":"Doe","id":1,"first_name":"John","email":"john.doe@acme.com"}
-```
-
-8. And, run INSERT:
-```shell
-INSERT INTO storeDB.product (description, price) VALUES ('Product x',1.23);
-```
-
-9. Look in the IDE console or in the other terminal, you will see a log like:
-```shell
-2023-03-31 13:37:58.389 DEBUG 21312 --- [pool-1-thread-1] b.c.w.listener.DebeziumListener          : Key = Struct{id=1}, Value = Struct{after=Struct{id=1,price=1.23},source=Struct{version=1.9.7.Final,connector=mysql,name=store-mysql-db-server,ts_ms=1680280678000,db=storeDB,table=product,server_id=1,file=binlog.000002,pos=5269,row=0,thread=11},op=c,ts_ms=1680280678325}
-2023-03-31 13:37:58.390 DEBUG 21312 --- [pool-1-thread-1] b.c.w.listener.DebeziumListener          : SourceRecordChangeValue = 'Struct{after=Struct{id=1,price=1.23},source=Struct{version=1.9.7.Final,connector=mysql,name=store-mysql-db-server,ts_ms=1680280678000,db=storeDB,table=product,server_id=1,file=binlog.000002,pos=5269,row=0,thread=11},op=c,ts_ms=1680280678325}'
-2023-03-31 13:37:58.390 DEBUG 21312 --- [pool-1-thread-1] br.com.williamrocha.utils.DebeziumUtils  : Key = Struct{id=1}, Value = Struct{after=Struct{id=1,price=1.23},source=Struct{version=1.9.7.Final,connector=mysql,name=store-mysql-db-server,ts_ms=1680280678000,db=storeDB,table=product,server_id=1,file=binlog.000002,pos=5269,row=0,thread=11},op=c,ts_ms=1680280678325}
-2023-03-31 13:37:58.390 DEBUG 21312 --- [pool-1-thread-1] br.com.williamrocha.utils.DebeziumUtils  : Key = Struct{id=1}, Value = Struct{after=Struct{id=1,price=1.23},source=Struct{version=1.9.7.Final,connector=mysql,name=store-mysql-db-server,ts_ms=1680280678000,db=storeDB,table=product,server_id=1,file=binlog.000002,pos=5269,row=0,thread=11},op=c,ts_ms=1680280678325}
-2023-03-31 13:37:58.390  INFO 21312 --- [pool-1-thread-1] b.c.w.listener.DebeziumListener          : Updated Data Operation:CREATE Before: null After: {price=1.23, id=1}
-2023-03-31 13:37:58.440  INFO 21312 --- [pool-1-thread-1] b.c.w.listener.DebeziumListener          : Updated Data JSON Operation:CREATE Before: null After: {"price":1.23,"id":1}
-```
-
-## Alternate
-```
-docker run -d --name mariadb1  -p 3306:3306 -e MARIADB_ROOT_PASSWORD=root  -e MARIADB_REPLICATION_USER=user  -e MARIADB_REPLICATION_PASSWORD=password  mariadb:10.5 --server-id=1 --log-bin --log-basename=mariadb1 --binlog-format=row --performance-schema=ON
-
-
- GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'user'@'%';
-
- FLUSH PRIVILEGES;
-
- CREATE DATABASE storeDB;
-
- CREATE TABLE storeDB.customer (
-    id int(11) NOT NULL,
-    first_name varchar(200) not null,
-    last_name varchar(200) not null,
-    email varchar(200) not null,
-    primary key (id)
- );
-
- CREATE TABLE storeDB.product (
-    id int(11) NOT NULL,
-    description varchar(200) NOT NULL,
-    price decimal not null,
-    primary key(id)
- );
-
-
-docker run -d --name mariadb2  -p 3307:3306 -e MARIADB_ROOT_PASSWORD=root mariadb:11.5
-
-CREATE DATABASE storeDB;
-
-CREATE TABLE storeDB.customer (
-    id int(11) NOT NULL,
-    first_name varchar(200) not null,
-    last_name varchar(200) not null,
-    email varchar(200) not null,
-    primary key (id)
-);
-
-CREATE TABLE storeDB.product (
-    id int(11) NOT NULL,
-    description varchar(200) NOT NULL,
-    price decimal not null,
-    primary key(id)
-);
+## TESTING 
+### Source
 
 ```
+docker run -d --name mariadb1  -p 3306:3306 -e MARIADB_ROOT_PASSWORD=root -e MARIADB_REPLICATION_USER=data-cdc -e MARIADB_REPLICATION_PASSWORD=SzQA9fG0Wkn6Ogxz2Iei97N4  mariadb:10.5 --server-id=1 --log-bin --log-basename=mariadb1 --binlog-format=row --performance-schema=ON
 
-  private Long id;
-  @Column(name = "first_name")
-  private String firstName;
-  @Column(name = "last_name")
-  private String lastName;
-  @Column(name = "email")
-  private String email;
+
+GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'data-cdc'@'%';
+
+FLUSH PRIVILEGES;
+
+CREATE DATABASE source_tc;
+
+USE source_tc;
+
+CREATE TABLE `tc_positions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `protocol` varchar(128) DEFAULT NULL,
+  `deviceid` int(11) NOT NULL,
+  `servertime` datetime NOT NULL DEFAULT current_timestamp(),
+  `devicetime` timestamp NULL DEFAULT NULL,
+  `fixtime` timestamp NULL DEFAULT NULL,
+  `valid` bit(1) NOT NULL,
+  `latitude` double NOT NULL,
+  `longitude` double NOT NULL,
+  `altitude` float NOT NULL,
+  `speed` float NOT NULL,
+  `course` float NOT NULL,
+  `address` varchar(512) DEFAULT NULL,
+  `attributes` varchar(4000) DEFAULT NULL,
+  `accuracy` double NOT NULL DEFAULT 0,
+  `network` varchar(4000) DEFAULT NULL,
+  `geofenceids` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`id`,`servertime`,`deviceid`),
+  KEY `position_deviceid_fixtime` (`deviceid`,`fixtime`),
+  KEY `idx_tc_positions_deviceid` (`deviceid`),
+  KEY `idx_tc_positions_devicetime` (`devicetime`),
+  KEY `idx_tc_positions_deviceid_devicetime` (`deviceid`,`devicetime`)
+) ENGINE=InnoDB;
+
+  CREATE TABLE `tc_events` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type` varchar(128) NOT NULL,
+  `eventtime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deviceid` int(11) DEFAULT NULL,
+  `positionid` int(11) DEFAULT NULL,
+  `geofenceid` int(11) DEFAULT NULL,
+  `attributes` varchar(4000) DEFAULT NULL,
+  `maintenanceid` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`,`eventtime`),
+  KEY `event_deviceid_servertime` (`deviceid`,`eventtime`),
+  KEY `tc_events_idx` (`eventtime`)
+) ENGINE=InnoDB;
+
+CREATE TABLE `tc_devices` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(128) NOT NULL,
+  `uniqueid` varchar(128) NOT NULL,
+  `lastupdate` timestamp NULL DEFAULT NULL,
+  `positionid` int(11) DEFAULT NULL,
+  `groupid` int(11) DEFAULT NULL,
+  `attributes` varchar(4000) DEFAULT NULL,
+  `phone` varchar(128) DEFAULT NULL,
+  `model` varchar(128) DEFAULT NULL,
+  `contact` varchar(512) DEFAULT NULL,
+  `category` varchar(128) DEFAULT NULL,
+  `disabled` bit(1) DEFAULT b'0',
+  `status` char(8) DEFAULT NULL,
+  `geofenceids` varchar(128) DEFAULT NULL,
+  `expirationtime` timestamp NULL DEFAULT NULL,
+  `motionstate` bit(1) DEFAULT b'0',
+  `motiontime` timestamp NULL DEFAULT NULL,
+  `motiondistance` double DEFAULT 0,
+  `overspeedstate` bit(1) DEFAULT b'0',
+  `overspeedtime` timestamp NULL DEFAULT NULL,
+  `overspeedgeofenceid` int(11) DEFAULT 0,
+  `motionstreak` bit(1) DEFAULT b'0',
+  `calendarid` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniqueid` (`uniqueid`),
+  KEY `fk_devices_groupid` (`groupid`),
+  KEY `idx_devices_uniqueid` (`uniqueid`),
+  KEY `fk_devices_calendarid` (`calendarid`)
+) ENGINE=InnoDB;
+
+ CREATE TABLE `tc_geofences` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(128) NOT NULL,
+  `description` varchar(128) DEFAULT NULL,
+  `area` varchar(4096) NOT NULL,
+  `attributes` varchar(4000) DEFAULT NULL,
+  `calendarid` int(11) DEFAULT NULL,
+  `geotype` varchar(255) DEFAULT 'ROAD',
+  `group_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
+```
+
+### Target
+```
+docker run -d --name mariadb2  -p 3307:3306 -e MARIADB_ROOT_PASSWORD=root -e MARIADB_USER=adminpanel_tracking -e MARIADB_PASSWORD=Minergo@2022! mariadb:11.5
+
+CREATE DATABASE target_tc;
+
+USE target_tc;
+
+CREATE TABLE `tc_positions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `protocol` varchar(128) DEFAULT NULL,
+  `deviceid` int(11) NOT NULL,
+  `servertime` datetime NOT NULL DEFAULT current_timestamp(),
+  `devicetime` timestamp NULL DEFAULT NULL,
+  `fixtime` timestamp NULL DEFAULT NULL,
+  `valid` bit(1) NOT NULL,
+  `latitude` double NOT NULL,
+  `longitude` double NOT NULL,
+  `altitude` float NOT NULL,
+  `speed` float NOT NULL,
+  `course` float NOT NULL,
+  `address` varchar(512) DEFAULT NULL,
+  `attributes` varchar(4000) DEFAULT NULL,
+  `accuracy` double NOT NULL DEFAULT 0,
+  `network` varchar(4000) DEFAULT NULL,
+  `geofenceids` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`id`,`servertime`,`deviceid`),
+  KEY `position_deviceid_fixtime` (`deviceid`,`fixtime`),
+  KEY `idx_tc_positions_deviceid` (`deviceid`),
+  KEY `idx_tc_positions_devicetime` (`devicetime`),
+  KEY `idx_tc_positions_deviceid_devicetime` (`deviceid`,`devicetime`)
+) ENGINE=InnoDB;
+
+  CREATE TABLE `tc_events` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type` varchar(128) NOT NULL,
+  `eventtime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deviceid` int(11) DEFAULT NULL,
+  `positionid` int(11) DEFAULT NULL,
+  `geofenceid` int(11) DEFAULT NULL,
+  `attributes` varchar(4000) DEFAULT NULL,
+  `maintenanceid` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`,`eventtime`),
+  KEY `event_deviceid_servertime` (`deviceid`,`eventtime`),
+  KEY `tc_events_idx` (`eventtime`)
+) ENGINE=InnoDB;
+
+CREATE TABLE `tc_devices` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(128) NOT NULL,
+  `uniqueid` varchar(128) NOT NULL,
+  `lastupdate` timestamp NULL DEFAULT NULL,
+  `positionid` int(11) DEFAULT NULL,
+  `groupid` int(11) DEFAULT NULL,
+  `attributes` varchar(4000) DEFAULT NULL,
+  `phone` varchar(128) DEFAULT NULL,
+  `model` varchar(128) DEFAULT NULL,
+  `contact` varchar(512) DEFAULT NULL,
+  `category` varchar(128) DEFAULT NULL,
+  `disabled` bit(1) DEFAULT b'0',
+  `status` char(8) DEFAULT NULL,
+  `geofenceids` varchar(128) DEFAULT NULL,
+  `expirationtime` timestamp NULL DEFAULT NULL,
+  `motionstate` bit(1) DEFAULT b'0',
+  `motiontime` timestamp NULL DEFAULT NULL,
+  `motiondistance` double DEFAULT 0,
+  `overspeedstate` bit(1) DEFAULT b'0',
+  `overspeedtime` timestamp NULL DEFAULT NULL,
+  `overspeedgeofenceid` int(11) DEFAULT 0,
+  `motionstreak` bit(1) DEFAULT b'0',
+  `calendarid` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniqueid` (`uniqueid`),
+  KEY `fk_devices_groupid` (`groupid`),
+  KEY `idx_devices_uniqueid` (`uniqueid`),
+  KEY `fk_devices_calendarid` (`calendarid`)
+) ENGINE=InnoDB;
+
+ CREATE TABLE `tc_geofences` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(128) NOT NULL,
+  `description` varchar(128) DEFAULT NULL,
+  `area` varchar(4096) NOT NULL,
+  `attributes` varchar(4000) DEFAULT NULL,
+  `calendarid` int(11) DEFAULT NULL,
+  `geotype` varchar(255) DEFAULT 'ROAD',
+  `group_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
+
+```
+
+### Testing Insert
+```
+INSERT INTO `tc_positions` SELECT * FROM db_traccar.tc_positions limit 1;
+
+INSERT INTO `tc_events` SELECT * FROM db_traccar.tc_events limit 1;
+
+```
