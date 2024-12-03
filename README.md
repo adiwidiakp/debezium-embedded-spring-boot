@@ -32,7 +32,7 @@ For more MySQL connector details check here [link](https://debezium.io/documenta
 ### Source
 
 ```
-docker run -d --name mariadb1  -p 3306:3306 -e MARIADB_ROOT_PASSWORD=root  -e MARIADB_REPLICATION_USER=data-cdc  -e MARIADB_REPLICATION_PASSWORD=SzQA9fG0Wkn6Ogxz2Iei97N4  mariadb:10.5 --server-id=1 --log-bin --log-basename=mariadb1 --binlog-format=row --performance-schema=ON
+docker run -d --rm --name mariadb1 -p 3306:3306 -e MARIADB_ROOT_PASSWORD=root  -e MARIADB_REPLICATION_USER=data-cdc  -e MARIADB_REPLICATION_PASSWORD=SzQA9fG0Wkn6Ogxz2Iei97N4  mariadb:10.5 --server-id=1 --log-bin --log-basename=mariadb1 --binlog-format=row --performance-schema=ON
 
 
 GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'data-cdc'@'%';
@@ -118,7 +118,12 @@ docker run -d --rm --name redis -p 6379:6379 redis:6.2.7-alpine
 ```
 INSERT INTO `tc_devices` VALUES (52,'RBT 4219','863719065180706','2024-12-02 17:08:08',1042605597,3,'{\"web.reportColor\":\"#FF0000\"}','8115116423','FMC650',NULL,'truck','\0','offline','null',NULL,'','2024-12-02 17:04:35',56779871.9,'\0',NULL,0,'\0',NULL);
 
+INSERT INTO `tc_devices` VALUES(270,'MMS 2590','863719064625180','2024-12-03 00:09:51',1046504994,3,NULL,'8115113781','FMC650',NULL,'truck','\0','online','[26]',NULL,'',NULL,0,'\0',NULL,0,'',NULL);
+
 INSERT INTO `tc_positions` VALUES (336884,'teltonika',52,'2023-10-31 15:59:10','2023-10-31 15:58:24','2023-10-31 15:58:24','\0',-3.7015451,115.5620886,0,0,0,NULL,'{\"priority\":0,\"sat\":0,\"event\":0,\"io22\":0,\"io71\":4,\"motion\":false,\"rssi\":4,\"io200\":2,\"ignition\":false,\"battery\":8.402000000000001,\"io68\":0,\"pdop\":0.0,\"hdop\":0.0,\"power\":0.0,\"io24\":0,\"distance\":0.0,\"totalDistance\":471069.61}',0,'null','null');
+
+INSERT INTO `tc_positions` VALUES (465678200,'teltonika',270,'2024-10-10 00:01:30','2024-10-09 16:01:28','2024-10-09 16:01:28','',-3.6020583,115.6550133,29,28.0778,1,NULL,'{\"priority\":0,\"sat\":43,\"event\":253,\"in1\":true,\"in2\":false,\"in3\":false,\"in4\":false,\"out1\":false,\"out2\":false,\"io50\":0,\"io51\":0,\"io22\":1,\"io71\":3,\"motion\":true,\"rssi\":5,\"io178\":2,\"io200\":0,\"ignition\":true,\"io144\":0,\"alarm\":\"general\",\"io254\":43,\"io9\":41,\"io10\":1,\"io11\":26,\"io245\":3,\"battery\":9.943,\"io68\":0,\"pdop\":0.6000000000000001,\"hdop\":0.30000000000000004,\"power\":27.996000000000002,\"io24\":52,\"io70\":287,\"io206\":7482,\"io237\":16,\"io238\":65496,\"io108\":10355,\"io194\":1728518488,\"tripOdometer\":157250,\"operator\":51010,\"io76\":0,\"io205\":75601173,\"io216\":6898943,\"io449\":1235775,\"io219\":4051328928997978160,\"io220\":3832898858102305591,\"io221\":4049078013122314240,\"io218\":510105114103781,\"distance\":14.67,\"totalDistance\":7575170.75,\"hours\":1487321640}',0,'null','[119,340,444]');
+
 
 INSERT INTO `tc_positions` SELECT * FROM db_traccar.tc_positions limit 1;
 
