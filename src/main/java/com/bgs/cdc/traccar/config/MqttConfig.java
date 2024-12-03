@@ -14,12 +14,21 @@ import org.springframework.stereotype.Service;
 public class MqttConfig {
     private static String serverURI;
     private static String clientId;
+    private static String user;
+    private static String password;
     private static IMqttClient instance;
 
     @Autowired
-    public MqttConfig(@Value("${mqttv.server.url}") String serverURI, @Value("${mqttv.server.clientId}") String clientId) {
+    public MqttConfig(
+            @Value("${mqttv.server.url}") String serverURI,
+            @Value("${mqttv.server.clientId}") String clientId,
+            @Value("${mqttv.server.user}") String user,
+            @Value("${mqttv.server.password}") String password
+    ) {
         MqttConfig.serverURI = serverURI;
         MqttConfig.clientId = clientId;
+        MqttConfig.user = user;
+        MqttConfig.password = password;
     }
 
     @Bean
@@ -30,6 +39,8 @@ public class MqttConfig {
             }
 
             MqttConnectOptions options = new MqttConnectOptions();
+            options.setUserName(user);
+            options.setPassword(password.toCharArray());
             options.setAutomaticReconnect(true);
             options.setCleanSession(true);
             options.setConnectionTimeout(10);
