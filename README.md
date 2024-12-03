@@ -157,7 +157,7 @@ CREATE TABLE `tc_positions` (
   KEY `idx_tc_positions_deviceid_devicetime` (`deviceid`,`devicetime`)
 ) ENGINE=InnoDB;
 
-  CREATE TABLE `tc_events` (
+CREATE TABLE `tc_events` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `type` varchar(128) NOT NULL,
   `eventtime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
