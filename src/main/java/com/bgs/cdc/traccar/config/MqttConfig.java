@@ -10,7 +10,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class MqttConfig {
     private static String serverURI;
     private static String clientId;
@@ -49,7 +52,7 @@ public class MqttConfig {
                 instance.connect(options);
             }
         } catch (MqttException e) {
-            e.printStackTrace();
+            log.error(clientId + " connect error", e);
         }
 
         return instance;

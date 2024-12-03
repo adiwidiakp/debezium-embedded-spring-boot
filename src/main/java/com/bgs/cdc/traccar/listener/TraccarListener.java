@@ -8,6 +8,7 @@ import com.bgs.cdc.traccar.utils.DebeziumRecordUtils;
 
 import io.debezium.config.Configuration;
 import io.debezium.data.Envelope;
+import io.debezium.data.Envelope.Operation;
 import io.debezium.embedded.Connect;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.RecordChangeEvent;
@@ -41,6 +42,8 @@ public class TraccarListener {
     private final Executor executor = Executors.newSingleThreadExecutor();
     private final DebeziumEngine<RecordChangeEvent<SourceRecord>> debeziumEngine;
     private final MqttService mqttService;
+    public static final String KEY_SPEED = "traccar:speed:";
+
 
     @Autowired
     private DeviceRepository deviceRepository;
@@ -72,7 +75,10 @@ public class TraccarListener {
     }
 
     private void handleChangeEvent(RecordChangeEvent<SourceRecord> sourceRecordRecordChangeEvent) {
-        //log.debug("handleChangeEvent {}", sourceRecordRecordChangeEvent);
+        if (log.isDebugEnabled()) {
+            log.debug("handleChangeEvent {}", sourceRecordRecordChangeEvent);  
+        }
+        
         SourceRecord sourceRecord = sourceRecordRecordChangeEvent.record();
         Struct sourceRecordChangeValue = (Struct) sourceRecord.value();
 
@@ -81,7 +87,7 @@ public class TraccarListener {
             try {
                 Operation operation = Operation.forCode((String) sourceRecordChangeValue.get(OPERATION));
                 if (Objects.nonNull(operation)) {
-                    if (Envelope.Operation.CREATE == operation || Envelope.Operation.UPDATE == operation || Envelope.Operation.DELETE == operation) {
+                    if (Envelope.Operation.CREATE == operation) {
 
                         if (Objects.equals(table, "tc_positions")) {
                             var column = Optional.ofNullable(DebeziumRecordUtils.getRecordStructValue(sourceRecordChangeValue, "after"));
@@ -89,20 +95,22 @@ public class TraccarListener {
                             if (deviceid != 0) {
                                 if (deviceService.getDeviceName(String.valueOf(deviceid)) == null) {
                                     Optional<TcDevice> device = this.deviceRepository.findById(deviceid);
-                                    device.ifPresent(tcDevice -> deviceService.saveDeviceName(String.valueOf(deviceid), tcDevice.getName().replace(" ", "")));
+                                    device.ifPresent(tcDevice -> deviceService.saveDeviceName(TraccarListener.KEY_SPEED + String.valueOf(deviceid), tcDevice.getName().replace(" ", "")));
                                 }
                                 Float speed = column.map(s -> s.getFloat32("speed")).orElse(0f);
                                 boolean isSend = false;
-                                if (deviceService.getDeviceSpeed(String.valueOf(deviceid)) == null) {
-                                    deviceService.saveDeviceSpeed(String.valueOf(deviceid), Double.valueOf(speed));
+                                if (deviceService.getDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid)) == null) {
+                                    deviceService.saveDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid), Double.valueOf(speed));
                                     isSend = true;
-                                } else if (!deviceService.getDeviceSpeed(String.valueOf(deviceid)).equals(Double.valueOf(speed))) {
-                                    deviceService.saveDeviceSpeed(String.valueOf(deviceid), Double.valueOf(speed));
+                                } else if (!deviceService.getDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid)).equals(Double.valueOf(speed))) {
+                                    deviceService.saveDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid), Double.valueOf(speed));
                                     isSend = true;
                                 }
                                 if (isSend) {
-                                    String queueName = "obu/speed/" + deviceService.getDeviceName(String.valueOf(deviceid)).replaceAll("\\s+", "");
-                                    //log.debug("publishMessage {} - {}", queueName, speed);
+                                    String queueName = "obu/speed/" + deviceService.getDeviceName(KEY_SPEED + String.valueOf(deviceid)).replaceAll("\\s+", "");
+                                    if (log.isDebugEnabled()) {
+                                        log.debug("publishMessage {} - {}", queueName, speed);
+                                    }
                                     this.mqttService.publishMessage(queueName, speed);
                                 }
                             }
