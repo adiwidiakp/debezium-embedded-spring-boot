@@ -8,7 +8,6 @@ import com.bgs.cdc.traccar.utils.DebeziumRecordUtils;
 
 import io.debezium.config.Configuration;
 import io.debezium.data.Envelope;
-import io.debezium.data.Envelope.Operation;
 import io.debezium.embedded.Connect;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.RecordChangeEvent;
