@@ -75,6 +75,7 @@ public class TraccarListener {
     }
 
     private void handleChangeEvent(RecordChangeEvent<SourceRecord> sourceRecordRecordChangeEvent) {
+        //log.debug("handleChangeEvent {}", sourceRecordRecordChangeEvent);
         SourceRecord sourceRecord = sourceRecordRecordChangeEvent.record();
         Struct sourceRecordChangeValue = (Struct) sourceRecord.value();
 
@@ -104,6 +105,7 @@ public class TraccarListener {
                                 }
                                 if (isSend) {
                                     String queueName = "obu/speed/" + deviceService.getDeviceName(String.valueOf(deviceid)).replaceAll("\\s+", "");
+                                    //log.debug("publishMessage {} - {}", queueName, speed);
                                     this.mqttService.publishMessage(queueName, speed);
                                     //this.rabbitMqService.sendMessage(queueName, speed);
                                 }

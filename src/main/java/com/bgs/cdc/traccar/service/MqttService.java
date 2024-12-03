@@ -22,6 +22,7 @@ public class MqttService {
             MqttMessage mqttMessage = new MqttMessage(message.toString().getBytes());
             mqttMessage.setQos(1);
             mqttMessage.setRetained(true);
+            //log.debug("client.publish {} - {}", topic, message);
             client.publish(topic, mqttMessage);
         } catch (MqttException e) {
             log.error("publishMessage error", e);

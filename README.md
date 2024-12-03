@@ -104,7 +104,10 @@ CREATE TABLE `tc_devices` (
 ### Running RabbitMQ
 ```
 docker run -d --rm --name rabbitmq -p 5672:5672 -p 1883:1883 rabbitmq:3.13-alpine
+
+docker exec rabbitmq rabbitmq-plugins enable rabbitmq_mqtt
 ```
+
 
 ### Running REDIS
 ```
