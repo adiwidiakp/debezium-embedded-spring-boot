@@ -66,6 +66,63 @@ CREATE TABLE `tc_positions` (
   KEY `idx_tc_positions_devicetime` (`devicetime`),
   KEY `idx_tc_positions_deviceid_devicetime` (`deviceid`,`devicetime`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE `tc_events` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type` varchar(128) NOT NULL,
+  `eventtime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deviceid` int(11) DEFAULT NULL,
+  `positionid` int(11) DEFAULT NULL,
+  `geofenceid` int(11) DEFAULT NULL,
+  `attributes` varchar(4000) DEFAULT NULL,
+  `maintenanceid` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`,`eventtime`),
+  KEY `event_deviceid_servertime` (`deviceid`,`eventtime`),
+  KEY `tc_events_idx` (`eventtime`)
+) ENGINE=InnoDB;
+
+CREATE TABLE `tc_devices` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(128) NOT NULL,
+  `uniqueid` varchar(128) NOT NULL,
+  `lastupdate` timestamp NULL DEFAULT NULL,
+  `positionid` int(11) DEFAULT NULL,
+  `groupid` int(11) DEFAULT NULL,
+  `attributes` varchar(4000) DEFAULT NULL,
+  `phone` varchar(128) DEFAULT NULL,
+  `model` varchar(128) DEFAULT NULL,
+  `contact` varchar(512) DEFAULT NULL,
+  `category` varchar(128) DEFAULT NULL,
+  `disabled` bit(1) DEFAULT b'0',
+  `status` char(8) DEFAULT NULL,
+  `geofenceids` varchar(128) DEFAULT NULL,
+  `expirationtime` timestamp NULL DEFAULT NULL,
+  `motionstate` bit(1) DEFAULT b'0',
+  `motiontime` timestamp NULL DEFAULT NULL,
+  `motiondistance` double DEFAULT 0,
+  `overspeedstate` bit(1) DEFAULT b'0',
+  `overspeedtime` timestamp NULL DEFAULT NULL,
+  `overspeedgeofenceid` int(11) DEFAULT 0,
+  `motionstreak` bit(1) DEFAULT b'0',
+  `calendarid` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniqueid` (`uniqueid`),
+  KEY `fk_devices_groupid` (`groupid`),
+  KEY `idx_devices_uniqueid` (`uniqueid`),
+  KEY `fk_devices_calendarid` (`calendarid`)
+) ENGINE=InnoDB;
+
+CREATE TABLE `tc_geofences` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(128) NOT NULL,
+  `description` varchar(128) DEFAULT NULL,
+  `area` varchar(4096) NOT NULL,
+  `attributes` varchar(4000) DEFAULT NULL,
+  `calendarid` int(11) DEFAULT NULL,
+  `geotype` varchar(255) DEFAULT 'ROAD',
+  `group_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
 ```
 
 ### Running RabbitMQ
