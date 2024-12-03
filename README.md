@@ -6,6 +6,7 @@ This project aims to show how to use Debezium as database monitor to help perfor
 [Debezium](https://debezium.io/) is an open source distributed platform for __Change Data Capture__ (CDC).
 [MariaDB](https://www.mariadb.com/) database used in this project.
 [RabbitMQ](https://www.rabbitmq.com/) is an open source message broker.
+[Redis](https://www.redis.io/) is an open source cache management.
 
 <br>
 
@@ -67,20 +68,6 @@ CREATE TABLE `tc_positions` (
   KEY `idx_tc_positions_deviceid_devicetime` (`deviceid`,`devicetime`)
 ) ENGINE=InnoDB;
 
-CREATE TABLE `tc_events` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `type` varchar(128) NOT NULL,
-  `eventtime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `deviceid` int(11) DEFAULT NULL,
-  `positionid` int(11) DEFAULT NULL,
-  `geofenceid` int(11) DEFAULT NULL,
-  `attributes` varchar(4000) DEFAULT NULL,
-  `maintenanceid` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`,`eventtime`),
-  KEY `event_deviceid_servertime` (`deviceid`,`eventtime`),
-  KEY `tc_events_idx` (`eventtime`)
-) ENGINE=InnoDB;
-
 CREATE TABLE `tc_devices` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(128) NOT NULL,
@@ -112,17 +99,6 @@ CREATE TABLE `tc_devices` (
   KEY `fk_devices_calendarid` (`calendarid`)
 ) ENGINE=InnoDB;
 
-CREATE TABLE `tc_geofences` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(128) NOT NULL,
-  `description` varchar(128) DEFAULT NULL,
-  `area` varchar(4096) NOT NULL,
-  `attributes` varchar(4000) DEFAULT NULL,
-  `calendarid` int(11) DEFAULT NULL,
-  `geotype` varchar(255) DEFAULT 'ROAD',
-  `group_name` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
 ```
 
 ### Running RabbitMQ
@@ -137,6 +113,10 @@ docker run -d --rm --name redis -p 6379:6379 redis:6.2.7-alpine
 
 ### Testing Insert
 ```
+INSERT INTO `tc_devices` VALUES (52,'RBT 4219','863719065180706','2024-12-02 17:08:08',1042605597,3,'{\"web.reportColor\":\"#FF0000\"}','8115116423','FMC650',NULL,'truck','\0','offline','null',NULL,'','2024-12-02 17:04:35',56779871.9,'\0',NULL,0,'\0',NULL);
+
+INSERT INTO `tc_positions` VALUES (336884,'teltonika',52,'2023-10-31 15:59:10','2023-10-31 15:58:24','2023-10-31 15:58:24','\0',-3.7015451,115.5620886,0,0,0,NULL,'{\"priority\":0,\"sat\":0,\"event\":0,\"io22\":0,\"io71\":4,\"motion\":false,\"rssi\":4,\"io200\":2,\"ignition\":false,\"battery\":8.402000000000001,\"io68\":0,\"pdop\":0.0,\"hdop\":0.0,\"power\":0.0,\"io24\":0,\"distance\":0.0,\"totalDistance\":471069.61}',0,'null','null');
+
 INSERT INTO `tc_positions` SELECT * FROM db_traccar.tc_positions limit 1;
 
 INSERT INTO `tc_events` SELECT * FROM db_traccar.tc_events limit 1;
