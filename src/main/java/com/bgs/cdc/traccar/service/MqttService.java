@@ -10,11 +10,11 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 @Service
 @Slf4j
 public class MqttService {
-    
+
     private IMqttClient client;
 
     public MqttService() {
-        this.client =  MqttConfig.getInstance();
+        this.client = MqttConfig.getInstance();
     }
 
     public void publishMessage(String topic, Object message) {
@@ -27,6 +27,6 @@ public class MqttService {
         } catch (MqttException e) {
             log.error("publishMessage error", e);
         }
-    }   
+    }
 
 }

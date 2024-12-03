@@ -3,7 +3,6 @@ package com.bgs.cdc.traccar.listener;
 import com.bgs.cdc.traccar.domain.TcDevice;
 import com.bgs.cdc.traccar.repository.DeviceRepository;
 import com.bgs.cdc.traccar.service.DeviceService;
-import com.bgs.cdc.traccar.service.RabbitMqService;
 import com.bgs.cdc.traccar.service.MqttService;
 import com.bgs.cdc.traccar.utils.DebeziumRecordUtils;
 
@@ -41,7 +40,6 @@ public class TraccarListener {
 
     private final Executor executor = Executors.newSingleThreadExecutor();
     private final DebeziumEngine<RecordChangeEvent<SourceRecord>> debeziumEngine;
-    private final RabbitMqService rabbitMqService;
     private final MqttService mqttService;
 
     @Autowired
@@ -63,14 +61,13 @@ public class TraccarListener {
     }
 
     public TraccarListener(Configuration traccarConnectorConfiguration,
-                           DeviceService deviceService, RedisTemplate<String, Object> redisTemplate, RabbitMqService rabbitMqService, MqttService mqttService) {
+                           DeviceService deviceService, RedisTemplate<String, Object> redisTemplate, MqttService mqttService) {
         this.debeziumEngine = DebeziumEngine.create(ChangeEventFormat.of(Connect.class))
                 .using(traccarConnectorConfiguration.asProperties())
                 .notifying(this::handleChangeEvent)
                 .build();
         this.deviceService = deviceService;
         this.deviceService = new DeviceService(redisTemplate);
-        this.rabbitMqService = rabbitMqService;
         this.mqttService = mqttService;
     }
 
@@ -107,7 +104,6 @@ public class TraccarListener {
                                     String queueName = "obu/speed/" + deviceService.getDeviceName(String.valueOf(deviceid)).replaceAll("\\s+", "");
                                     //log.debug("publishMessage {} - {}", queueName, speed);
                                     this.mqttService.publishMessage(queueName, speed);
-                                    //this.rabbitMqService.sendMessage(queueName, speed);
                                 }
                             }
                         }
