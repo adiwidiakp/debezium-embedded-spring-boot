@@ -19,12 +19,16 @@ import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -49,6 +53,9 @@ public class TraccarListener {
 
     @Autowired
     private DeviceService deviceService;
+
+    @Value("${traccar.speed.maxtime}")
+    private Integer maxtime;
 
     @PostConstruct
     private void start() {
@@ -75,9 +82,9 @@ public class TraccarListener {
 
     private void handleChangeEvent(RecordChangeEvent<SourceRecord> sourceRecordRecordChangeEvent) {
         if (log.isDebugEnabled()) {
-            log.debug("handleChangeEvent {}", sourceRecordRecordChangeEvent);  
+            log.debug("handleChangeEvent {}", sourceRecordRecordChangeEvent);
         }
-        
+
         SourceRecord sourceRecord = sourceRecordRecordChangeEvent.record();
         Struct sourceRecordChangeValue = (Struct) sourceRecord.value();
 
@@ -96,21 +103,41 @@ public class TraccarListener {
                                     Optional<TcDevice> device = this.deviceRepository.findById(deviceid);
                                     device.ifPresent(tcDevice -> deviceService.saveDeviceName(TraccarListener.KEY_SPEED + String.valueOf(deviceid), tcDevice.getName().replace(" ", "")));
                                 }
-                                Float speed = column.map(s -> s.getFloat32("speed")).orElse(0f);
-                                boolean isSend = false;
-                                if (deviceService.getDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid)) == null) {
-                                    deviceService.saveDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid), Double.valueOf(speed));
-                                    isSend = true;
-                                } else if (!deviceService.getDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid)).equals(Double.valueOf(speed))) {
-                                    deviceService.saveDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid), Double.valueOf(speed));
-                                    isSend = true;
-                                }
-                                if (isSend) {
-                                    String queueName = "obu/speed/" + deviceService.getDeviceName(KEY_SPEED + String.valueOf(deviceid)).replaceAll("\\s+", "");
-                                    if (log.isDebugEnabled()) {
-                                        log.debug("publishMessage {} - {}", queueName, speed);
+
+                                boolean isNext = true;
+                                if (maxtime != null && maxtime > 0) {
+                                    try {
+                                        String deviceTime = column.map(s -> s.getString("devicetime")).orElse("");
+                                        if (!deviceTime.equals("")) {
+                                            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                                            Date parseDeviceTime = dateFormat.parse(deviceTime);
+                                            Timestamp tsDeviceTime = new java.sql.Timestamp(parseDeviceTime.getTime());
+                                            if (tsDeviceTime.getSeconds() > maxtime) {
+                                                isNext = false;
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        log.trace("SourceRecordChangeValue {} - {} => '{}'", table, e.getMessage(), sourceRecordChangeValue);
                                     }
-                                    this.mqttService.publishMessage(queueName, speed);
+                                }
+
+                                if (isNext) {
+                                    Float speed = column.map(s -> s.getFloat32("speed")).orElse(0f);
+                                    boolean isSent = false;
+                                    if (deviceService.getDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid)) == null) {
+                                        deviceService.saveDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid), Double.valueOf(speed));
+                                        isSent = true;
+                                    } else if (!deviceService.getDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid)).equals(Double.valueOf(speed))) {
+                                        deviceService.saveDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid), Double.valueOf(speed));
+                                        isSent = true;
+                                    }
+                                    if (isSent) {
+                                        String queueName = "obu/speed/" + deviceService.getDeviceName(KEY_SPEED + String.valueOf(deviceid)).replaceAll("\\s+", "");
+                                        if (log.isDebugEnabled()) {
+                                            log.debug("publishMessage {} - {}", queueName, speed);
+                                        }
+                                        this.mqttService.publishMessage(queueName, speed);
+                                    }
                                 }
                             }
                         }
