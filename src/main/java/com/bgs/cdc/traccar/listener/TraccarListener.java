@@ -110,24 +110,20 @@ public class TraccarListener {
                                 boolean isProcessed = true;
                                 if (maxtime != null && maxtime > 0) {
                                     try {
-                                        //String deviceTime = column.map(s -> s.getString("devicetime")).orElse("");
-                                        Long deviceTimeEpoch = Long.valueOf(column.map(s -> s.getInt32("devicetime")).orElse(0));
-                                        Duration duration = Duration.between( Instant.ofEpochMilli(deviceTimeEpoch), Instant.now());
-                                        if (duration.getSeconds() > maxtime) {
-                                            isProcessed = false;
-                                        }
-
-                                        //if (!deviceTime.equals("")) {
+                                        String deviceTime = column.map(s -> s.getString("devicetime")).orElse("");
+                                        if (!deviceTime.equals("")) {
                                             /*SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
                                             Date parseDeviceTime = dateFormat.parse(deviceTime);*/
-                                            //Duration duration = Duration.between(TraccarListener.dateFormat.parse(deviceTime).toInstant(), Instant.now());
-
+                                            Duration duration = Duration.between(TraccarListener.dateFormat.parse(deviceTime).toInstant(), Instant.now());
+                                            if (duration.getSeconds() > maxtime) {
+                                                isProcessed = false;
+                                            }
                                             
                                             /*Timestamp tsDeviceTime = new java.sql.Timestamp(parseDeviceTime.getTime());
                                             if (tsDeviceTime.getSeconds() > maxtime) {
                                                 isNext = false;
                                             }*/
-                                        //}
+                                        }
                                     } catch (Exception e) {
                                         log.trace("SourceRecordChangeValue {} - {} => '{}'", table, e.getMessage(), sourceRecordChangeValue);
                                     }
