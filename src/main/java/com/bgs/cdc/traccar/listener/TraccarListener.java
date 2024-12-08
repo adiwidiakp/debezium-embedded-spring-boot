@@ -26,9 +26,11 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
-import java.sql.Timestamp;
+//import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Duration;
+import java.time.Instant;
+//import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -46,6 +48,7 @@ public class TraccarListener {
     private final DebeziumEngine<RecordChangeEvent<SourceRecord>> debeziumEngine;
     private final MqttService mqttService;
     public static final String KEY_SPEED = "traccar:speed:";
+    public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
 
     @Autowired
@@ -104,24 +107,29 @@ public class TraccarListener {
                                     device.ifPresent(tcDevice -> deviceService.saveDeviceName(TraccarListener.KEY_SPEED + String.valueOf(deviceid), tcDevice.getName().replace(" ", "")));
                                 }
 
-                                boolean isNext = true;
+                                boolean isProcessed = true;
                                 if (maxtime != null && maxtime > 0) {
                                     try {
                                         String deviceTime = column.map(s -> s.getString("devicetime")).orElse("");
                                         if (!deviceTime.equals("")) {
-                                            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-                                            Date parseDeviceTime = dateFormat.parse(deviceTime);
-                                            Timestamp tsDeviceTime = new java.sql.Timestamp(parseDeviceTime.getTime());
+                                            /*SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                                            Date parseDeviceTime = dateFormat.parse(deviceTime);*/
+                                            Duration duration = Duration.between(TraccarListener.dateFormat.parse(deviceTime).toInstant(), Instant.now());
+                                            if (duration.getSeconds() > maxtime) {
+                                                isProcessed = false;
+                                            }
+                                            
+                                            /*Timestamp tsDeviceTime = new java.sql.Timestamp(parseDeviceTime.getTime());
                                             if (tsDeviceTime.getSeconds() > maxtime) {
                                                 isNext = false;
-                                            }
+                                            }*/
                                         }
                                     } catch (Exception e) {
                                         log.trace("SourceRecordChangeValue {} - {} => '{}'", table, e.getMessage(), sourceRecordChangeValue);
                                     }
                                 }
 
-                                if (isNext) {
+                                if (isProcessed) {
                                     Float speed = column.map(s -> s.getFloat32("speed")).orElse(0f);
                                     boolean isSent = false;
                                     if (deviceService.getDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid)) == null) {
