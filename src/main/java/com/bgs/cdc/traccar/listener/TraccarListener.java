@@ -84,8 +84,8 @@ public class TraccarListener {
     }
 
     private void handleChangeEvent(RecordChangeEvent<SourceRecord> sourceRecordRecordChangeEvent) {
-        if (log.isDebugEnabled()) {
-            log.debug("handleChangeEvent {}", sourceRecordRecordChangeEvent);
+        if (log.isTraceEnabled()) {
+            log.trace("handleChangeEvent {}", sourceRecordRecordChangeEvent);
         }
 
         SourceRecord sourceRecord = sourceRecordRecordChangeEvent.record();
