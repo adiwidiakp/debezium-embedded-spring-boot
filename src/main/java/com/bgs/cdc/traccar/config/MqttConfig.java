@@ -23,10 +23,10 @@ public class MqttConfig {
     private static IMqttClient instance;
 
     public MqttConfig(
-            @Value("${mqttv.server.url}") String serverURI,
-            @Value("${mqttv.server.clientId}") String clientId,
-            @Value("${mqttv.server.user}") String user,
-            @Value("${mqttv.server.password}") String password
+            @Value("${mqtt.server.url}") String serverURI,
+            @Value("${mqtt.server.clientId}") String clientId,
+            @Value("${mqtt.server.user}") String user,
+            @Value("${mqtt.server.password}") String password
     ) {
         MqttConfig.serverURI = serverURI;
         MqttConfig.clientId = clientId;
