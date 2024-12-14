@@ -130,6 +130,7 @@ public class TraccarListener {
                                 }
 
                                 if (isProcessed) {
+                          
                                     Float speed = column.map(s -> s.getFloat32("speed")).orElse(0f);
                                     boolean isSent = false;
                                     if (deviceService.getDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid)) == null) {
@@ -139,6 +140,9 @@ public class TraccarListener {
                                         deviceService.saveDeviceSpeed(TraccarListener.KEY_SPEED + String.valueOf(deviceid), Double.valueOf(speed));
                                         isSent = true;
                                     }
+                                    if (log.isDebugEnabled()) {
+                                        log.debug("Processing {} - {}", deviceService.getDeviceName(KEY_SPEED + String.valueOf(deviceid)).replaceAll("\\s+", ""), speed);
+                                    }          
                                     if (isSent) {
                                         String queueName = "obu/speed/" + deviceService.getDeviceName(KEY_SPEED + String.valueOf(deviceid)).replaceAll("\\s+", "");
                                         if (log.isDebugEnabled()) {
