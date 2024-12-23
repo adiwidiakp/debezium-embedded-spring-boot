@@ -2,10 +2,12 @@ package com.bgs.cdc.traccar.service;
 
 import com.bgs.cdc.traccar.domain.TcDevice;
 import com.bgs.cdc.traccar.domain.TcEvent;
+import com.bgs.cdc.traccar.domain.TcEventRitase;
 import com.bgs.cdc.traccar.domain.TcGeofence;
 import com.bgs.cdc.traccar.domain.TcPosition;
 import com.bgs.cdc.traccar.repository.DeviceRepository;
 import com.bgs.cdc.traccar.repository.EventRepository;
+import com.bgs.cdc.traccar.repository.EventRitaseRepository;
 import com.bgs.cdc.traccar.repository.GeofenceRepository;
 import com.bgs.cdc.traccar.repository.PositionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +27,7 @@ public class TraccarService {
 
     private final PositionRepository positionRepository;
     private final EventRepository eventsRepository;
+    private final EventRitaseRepository eventRitaseRepository;
     private final DeviceRepository devicesRepository;
     private final GeofenceRepository geofencesRepository;
 
@@ -32,6 +35,8 @@ public class TraccarService {
     private static final String tc_events = "tc_events";
     private static final String tc_devices = "tc_devices";
     private static final String tc_geofences = "tc_geofences";
+    private static final String geofenceExit = "geofenceExit";
+    private static final String geofenceEnter = "geofenceEnter";
 
     public void replicateData(String table, Map<String, Object> data, Operation operation) {
         if (Operation.DELETE == operation) {
@@ -57,6 +62,16 @@ public class TraccarService {
                 final TcEvent event = mapper.convertValue(data, TcEvent.class);
                 log.info("{} - {} => {}", tc_events, operation, data);
                 eventsRepository.save(event);
+                String eventType = event.getType();
+                if (geofenceEnter.equals(eventType) || geofenceExit.equals(eventType)) {
+                    TcEventRitase eventRitase = new TcEventRitase();
+                    eventRitase.setType(eventType);
+                    eventRitase.setEventtime(event.getEventtime());
+                    eventRitase.setDeviceid(event.getDeviceid());
+                    eventRitase.setPositionid(event.getPositionid());
+                    eventRitase.setGeofenceid(event.getGeofenceid());
+                    eventRitaseRepository.save(eventRitase);
+                }
             } else if (tc_devices.equals(table)) {
                 final ObjectMapper mapper = new ObjectMapper();
                 final TcDevice device = mapper.convertValue(data, TcDevice.class);

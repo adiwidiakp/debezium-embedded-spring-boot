@@ -214,6 +214,14 @@ CREATE TABLE `tc_devices` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
+
+ CREATE TABLE `tc_events_ritase` (
+  `id` int(11) NOT NULL DEFAULT 0,
+  `eventtime` datetime DEFAULT NULL,
+  `deviceid` int(11) DEFAULT NULL,
+  `positionid` int(11) DEFAULT NULL,
+  `geofenceid` int(11) DEFAULT NULL
+) ENGINE=InnoDB;
 ```
 
 ### Testing Insert
