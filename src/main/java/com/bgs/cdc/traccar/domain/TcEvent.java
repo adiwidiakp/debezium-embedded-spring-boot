@@ -21,11 +21,11 @@ public class TcEvent {
     private Long id;
     private String type;
     private Date eventtime;
-    private Integer deviceid;
+    private Long deviceid;
     private Long positionid;
-    private Integer geofenceid;
+    private Long geofenceid;
     private String attributes;
-    private Integer maintenanceid;
+    private Long maintenanceid;
 
     public void setEventtime(Date eventtime) {
         Instant instant = eventtime.toInstant();

@@ -23,7 +23,7 @@ public class TcPosition {
     @Id
     private Long id;
     private String protocol;
-    private Integer deviceid;
+    private Long deviceid;
     private Date servertime;
     @Temporal(TemporalType.TIMESTAMP)
     private Date devicetime;

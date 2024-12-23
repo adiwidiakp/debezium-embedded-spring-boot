@@ -19,11 +19,13 @@ import lombok.Data;
 public class TcEventRitase {
     @Id
     private Long id;
-    private String type;
     private Date eventtime;
-    private Integer deviceid;
+    private Long deviceid;
     private Long positionid;
-    private Integer geofenceid;
+    private Long geofenceid;
+    private String type;
+    private String geoname;
+    private String geoattributes;
 
 /*   public void setEventtime(Date eventtime) {
         Instant instant = eventtime.toInstant();

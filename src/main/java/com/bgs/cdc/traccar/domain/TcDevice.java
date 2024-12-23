@@ -20,8 +20,8 @@ public class TcDevice {
     private String uniqueid;
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastupdate;
-    private Integer positionid;
-    private Integer groupid;
+    private Long positionid;
+    private Long groupid;
     private String attributes;
     private String phone;
     private String model;
@@ -39,7 +39,7 @@ public class TcDevice {
     private boolean overspeedstate;
     @Temporal(TemporalType.TIMESTAMP)
     private Date overspeedtime;
-    private Integer overspeedgeofenceid;
+    private Long overspeedgeofenceid;
     private boolean motionstreak;
-    private Integer calendarid;
+    private Long calendarid;
 }

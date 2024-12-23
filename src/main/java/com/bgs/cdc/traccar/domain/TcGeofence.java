@@ -18,7 +18,7 @@ public class TcGeofence {
     private String description;
     private String area;
     private String attributes;
-    private Integer calendarid;
+    private Long calendarid;
     private String geotype;
     @JsonProperty("group_name")
     private String groupName;

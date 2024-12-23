@@ -16,6 +16,7 @@ import io.debezium.data.Envelope.Operation;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,13 +64,41 @@ public class TraccarService {
                 log.info("{} - {} => {}", tc_events, operation, data);
                 eventsRepository.save(event);
                 String eventType = event.getType();
-                if (geofenceEnter.equals(eventType) || geofenceExit.equals(eventType)) {
+                boolean isInsert = false;
+                String geoName = null;
+                String geoAttributes = null;
+                if (geofenceEnter.equals(eventType)) {
+                    Optional<TcGeofence> geofence = geofencesRepository.findById(event.getGeofenceid());
+
+                    if (geofence.isPresent()) {
+                        geoName = geofence.get().getName();
+                        geoAttributes = geofence.get().getAttributes();
+                        
+                        if ((geoName.contains("KM") && geoAttributes.contains("KM Hauling")) || geoAttributes.contains("ROM") || (geoName.contains("PORT") && geoAttributes.contains("Antrian"))) {   
+                            isInsert = true;
+                        }
+                    }
+                } else if (geofenceExit.equals(eventType)) {
+                    Optional<TcGeofence> geofence = geofencesRepository.findById(event.getGeofenceid());
+
+                    if (geofence.isPresent()) {
+                        geoName = geofence.get().getName();
+                        geoAttributes = geofence.get().getAttributes();                    
+                        if (geoAttributes.contains("ROM") || (geoAttributes.contains("PORT") && !"PORT BIB".equals(geoName) && !geoAttributes.contains("PORT BIB"))) {
+                            isInsert = true;
+                        }
+                    }
+                }
+                if (isInsert) {                    
                     TcEventRitase eventRitase = new TcEventRitase();
                     eventRitase.setType(eventType);
+                    eventRitase.setId(event.getId());
                     eventRitase.setEventtime(event.getEventtime());
                     eventRitase.setDeviceid(event.getDeviceid());
                     eventRitase.setPositionid(event.getPositionid());
                     eventRitase.setGeofenceid(event.getGeofenceid());
+                    eventRitase.setGeoname(geoName);
+                    eventRitase.setGeoattributes(geoAttributes);
                     eventRitaseRepository.save(eventRitase);
                 }
             } else if (tc_devices.equals(table)) {
