@@ -1,4 +1,4 @@
-cd ..package com.bgs.cdc.traccar.repository;
+package com.bgs.cdc.traccar.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
