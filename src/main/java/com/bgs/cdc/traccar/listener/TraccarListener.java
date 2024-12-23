@@ -94,7 +94,8 @@ public class TraccarListener {
                     }
                 }
             } catch (DataException de) {
-                log.warn("DataException - sourceRecordChangeValue {} - {} => '{}'",  table, de.getMessage(), sourceRecordChangeValue);
+                if (table != null)
+                    log.warn("DataException - sourceRecordChangeValue {} - {} => '{}'",  table, de.getMessage(), sourceRecordChangeValue);
                 //SpringApplication.exit(App.ctx, () -> 1);
             } catch (Exception e) {
                 log.error("Exception - sourceRecordChangeValue {} - {} => '{}'",  table, e.getMessage(), sourceRecordChangeValue);
