@@ -13,7 +13,7 @@ import com.bgs.cdc.traccar.repository.PositionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.debezium.data.Envelope.Operation;
 
-
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -121,6 +121,7 @@ public class TraccarService {
             }
         }  
     }
+    @Cacheable(value = "geofence", key = "#geofenceid")
     private Optional<TcGeofence> getGeofence(Long geofenceid) {
         List<Object[]> result = geofencesRepository.findByGeofenceId(geofenceid);
         if (result.isEmpty()) {
@@ -133,6 +134,7 @@ public class TraccarService {
             return Optional.of(geofence);
         }
     }
+    @Cacheable(value = "device", key = "#deviceid")
     private Optional<TcDevice> getDevice(Long deviceid) {
         List<Object[]> result = devicesRepository.findByDeviceId(deviceid);
         if (result.isEmpty()) {
