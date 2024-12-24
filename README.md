@@ -202,7 +202,7 @@ CREATE TABLE `tc_devices` (
   KEY `fk_devices_calendarid` (`calendarid`)
 ) ENGINE=InnoDB;
 
- CREATE TABLE `tc_geofences` (
+CREATE TABLE `tc_geofences` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(128) NOT NULL,
   `description` varchar(128) DEFAULT NULL,
@@ -215,12 +215,17 @@ CREATE TABLE `tc_devices` (
 ) ENGINE=InnoDB;
 
 
- CREATE TABLE `tc_events_ritase` (
+CREATE TABLE `events_ritase` (
   `id` int(11) NOT NULL DEFAULT 0,
   `eventtime` datetime DEFAULT NULL,
-  `deviceid` int(11) DEFAULT NULL,
-  `positionid` int(11) DEFAULT NULL,
-  `geofenceid` int(11) DEFAULT NULL
+  `deviceid` int(11) NOT NULL DEFAULT 0,
+  `positionid` int(11) NOT NULL DEFAULT 0,
+  `geofenceid` int(11) NOT NULL DEFAULT 0,
+  `type` enum('geofenceEnter','geofenceExit') DEFAULT NULL,
+  `devname` varchar(128) DEFAULT NULL,
+  `geoname` varchar(128) DEFAULT NULL,
+  `geoattributes` text /*M!100301 COMPRESSED*/ DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 ```
 

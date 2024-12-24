@@ -15,8 +15,8 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "tc_events_ritase")
-public class TcEventRitase {
+@Table(name = "events_ritase")
+public class EventRitase {
     @Id
     private Long id;
     private Date eventtime;
@@ -26,6 +26,7 @@ public class TcEventRitase {
     private String type;
     private String geoname;
     private String geoattributes;
+    private String devname;
 
 /*   public void setEventtime(Date eventtime) {
         Instant instant = eventtime.toInstant();

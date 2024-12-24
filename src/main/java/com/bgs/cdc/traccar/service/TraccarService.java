@@ -2,7 +2,7 @@ package com.bgs.cdc.traccar.service;
 
 import com.bgs.cdc.traccar.domain.TcDevice;
 import com.bgs.cdc.traccar.domain.TcEvent;
-import com.bgs.cdc.traccar.domain.TcEventRitase;
+import com.bgs.cdc.traccar.domain.EventRitase;
 import com.bgs.cdc.traccar.domain.TcGeofence;
 import com.bgs.cdc.traccar.domain.TcPosition;
 import com.bgs.cdc.traccar.repository.DeviceRepository;
@@ -13,8 +13,10 @@ import com.bgs.cdc.traccar.repository.PositionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.debezium.data.Envelope.Operation;
 
+
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -68,7 +70,7 @@ public class TraccarService {
                 String geoName = null;
                 String geoAttributes = null;
                 if (geofenceEnter.equals(eventType)) {
-                    Optional<TcGeofence> geofence = geofencesRepository.findById(event.getGeofenceid());
+                    Optional<TcGeofence> geofence = getGeofence(event.getGeofenceid());
 
                     if (geofence.isPresent()) {
                         geoName = geofence.get().getName();
@@ -79,7 +81,7 @@ public class TraccarService {
                         }
                     }
                 } else if (geofenceExit.equals(eventType)) {
-                    Optional<TcGeofence> geofence = geofencesRepository.findById(event.getGeofenceid());
+                    Optional<TcGeofence> geofence = getGeofence(event.getGeofenceid());
 
                     if (geofence.isPresent()) {
                         geoName = geofence.get().getName();
@@ -89,17 +91,22 @@ public class TraccarService {
                         }
                     }
                 }
-                if (isInsert) {                    
-                    TcEventRitase eventRitase = new TcEventRitase();
-                    eventRitase.setType(eventType);
-                    eventRitase.setId(event.getId());
-                    eventRitase.setEventtime(event.getEventtime());
-                    eventRitase.setDeviceid(event.getDeviceid());
-                    eventRitase.setPositionid(event.getPositionid());
-                    eventRitase.setGeofenceid(event.getGeofenceid());
-                    eventRitase.setGeoname(geoName);
-                    eventRitase.setGeoattributes(geoAttributes);
-                    eventRitaseRepository.save(eventRitase);
+                if (isInsert) {
+                    Optional<TcDevice> device = getDevice(event.getDeviceid());
+
+                    if (device.isPresent()) {
+                        EventRitase eventRitase = new EventRitase();
+                        eventRitase.setType(eventType);
+                        eventRitase.setId(event.getId());
+                        eventRitase.setEventtime(event.getEventtime());
+                        eventRitase.setDeviceid(event.getDeviceid());
+                        eventRitase.setPositionid(event.getPositionid());
+                        eventRitase.setGeofenceid(event.getGeofenceid());
+                        eventRitase.setGeoname(geoName);
+                        eventRitase.setGeoattributes(geoAttributes);
+                        eventRitase.setDevname(device.get().getName());
+                        eventRitaseRepository.save(eventRitase);
+                    }
                 }
             } else if (tc_devices.equals(table)) {
                 final ObjectMapper mapper = new ObjectMapper();
@@ -113,5 +120,28 @@ public class TraccarService {
                 geofencesRepository.save(geofence);
             }
         }  
+    }
+    private Optional<TcGeofence> getGeofence(Long geofenceid) {
+        List<Object[]> result = geofencesRepository.findByGeofenceId(geofenceid);
+        if (result.isEmpty()) {
+            return Optional.empty();
+        } else {
+            TcGeofence geofence = new TcGeofence();
+            geofence.setId(Long.parseLong(result.get(0)[0].toString()));
+            geofence.setName(result.get(0)[1].toString());
+            geofence.setAttributes(result.get(0)[2].toString());
+            return Optional.of(geofence);
+        }
+    }
+    private Optional<TcDevice> getDevice(Long deviceid) {
+        List<Object[]> result = devicesRepository.findByDeviceId(deviceid);
+        if (result.isEmpty()) {
+            return Optional.empty();
+        } else {
+            TcDevice device = new TcDevice();
+            device.setId(Long.parseLong(result.get(0)[0].toString()));
+            device.setName(result.get(0)[1].toString());
+            return Optional.of(device);
+        }
     }
 }
